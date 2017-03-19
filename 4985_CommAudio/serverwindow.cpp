@@ -18,6 +18,7 @@
 
 #include "serverwindow.h"
 #include "ui_serverwindow.h"
+#include "server.h"
 
 ServerWindow::ServerWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -31,9 +32,25 @@ ServerWindow::~ServerWindow()
     delete ui;
 }
 
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void ServerWindow::on_srvStartStopButton_clicked()
+--
+--
+--  RETURNS:
+--
+--  DATE:          March 19, 2017
+--
+--  DESIGNER:      Robert Arendac
+--
+--  PROGRAMMER:    RobertArendac
+--
+--  NOTES:
+--      Starts the server on button click.  NOTE: Still need to setup UDP server for audio
+--      streaming, should be on separate thread. Also, hardcoding port number for now
+---------------------------------------------------------------------------------------*/
 void ServerWindow::on_srvStartStopButton_clicked()
 {
-
+    runTCPServer(this, 5150);
 }
 
 void ServerWindow::on_srvTrackPreviousButton_clicked()

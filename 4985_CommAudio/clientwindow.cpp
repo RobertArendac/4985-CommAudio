@@ -17,6 +17,7 @@
 
 #include "clientwindow.h"
 #include "ui_clientwindow.h"
+#include "client.h"
 
 ClientWindow::ClientWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -30,9 +31,24 @@ ClientWindow::~ClientWindow()
     delete ui;
 }
 
-void ClientWindow::on_pushButton_clicked()
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void ClientWindow::on_cltConnect_clicked()
+--
+--  RETURNS:
+--
+--  DATE:          March 19, 2017
+--
+--  DESIGNER:      Robert Arendac
+--
+--  PROGRAMMER:    RobertArendac
+--
+--  NOTES:
+--      Starts a TCP client and connect to a host on a port, both obtained from the UI.
+--      NOTE: Also need to run UDP on separate thread.
+---------------------------------------------------------------------------------------*/
+void ClientWindow::on_cltConnect_clicked()
 {
-
+    runTCPClient(this, ui->cltHostIPEditText->text().toStdString().c_str(), ui->cltPortSpinner->value());
 }
 
 void ClientWindow::on_cltSelectAllButton_clicked()
