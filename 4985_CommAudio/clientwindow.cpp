@@ -5,9 +5,9 @@
 --
 --	DATE:			March 19, 2017
 --
---	DESIGNERS: Alex Zielinski
+--	DESIGNERS:      Alex Zielinski
 --
---	PROGRAMMERS: Alex Zielinski
+--	PROGRAMMERS:    Alex Zielinski
 --
 --	NOTES:
 --      This is the client window where users can connect to a server to listen to songs

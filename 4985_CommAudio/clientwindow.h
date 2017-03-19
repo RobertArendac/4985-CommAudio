@@ -1,3 +1,5 @@
+/* clientwindow.h */
+
 #ifndef CLIENTWINDOW_H
 #define CLIENTWINDOW_H
 

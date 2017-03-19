@@ -22,7 +22,22 @@
 #include "serverwindow.h"
 #include "clientwindow.h"
 
-/* constructor */
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     MainWindow::MainWindow(QWidget *parent)
+--
+--
+--  RETURNS:
+--
+--  DATE:          March 19, 2017
+--
+--  DESIGNER:      Qt default
+--
+--  PROGRAMMER:    Qt default
+--
+--  NOTES:
+--      Qt default constructor. Displays the window
+---------------------------------------------------------------------------------------*/
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -30,13 +45,43 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this); // display MainWindow
 }
 
-/* destructor */
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     MainWindow::MainWindow(QWidget *parent)
+--
+--
+--  RETURNS:
+--
+--  DATE:          March 19, 2017
+--
+--  DESIGNER:      Qt default
+--
+--  PROGRAMMER:    Qt default
+--
+--  NOTES:
+--      Qt default destructor. Deletes the window
+---------------------------------------------------------------------------------------*/
 MainWindow::~MainWindow()
 {
     delete ui;
 }
 
-/* server button event handler */
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void MainWindow::on_serverButton_clicked()
+--
+--
+--  RETURNS:
+--
+--  DATE:          March 19, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      When clicked on it redirects user to the server window
+---------------------------------------------------------------------------------------*/
 void MainWindow::on_serverButton_clicked()
 {
     this->hide(); // hide the current window
@@ -45,7 +90,22 @@ void MainWindow::on_serverButton_clicked()
     sw->show();
 }
 
-/* client button event handler */
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void MainWindow::on_clientButton_clicked()
+--
+--
+--  RETURNS:
+--
+--  DATE:          March 19, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      When clicked on it redirects user to the client window
+---------------------------------------------------------------------------------------*/
 void MainWindow::on_clientButton_clicked()
 {
     this->hide(); // hide the current window
