@@ -1,3 +1,21 @@
+/*---------------------------------------------------------------------------------------
+--	SOURCE FILE:	serverwindow.cpp
+--
+--	FUNCTIONS:
+--
+--	DATE:			March 19, 2017
+--
+--	DESIGNERS: Alex Zielinski
+--
+--	PROGRAMMERS: Alex Zielinski
+--
+--	NOTES:
+--      This is the server window which will act as a radio station. Clients can connect
+--      to the server and listen to the audio that the server is streaming. The server
+--      relays the audio to all connected clients and relays microphone input from a client
+--      to all connected clients
+---------------------------------------------------------------------------------------*/
+
 #include "serverwindow.h"
 #include "ui_serverwindow.h"
 

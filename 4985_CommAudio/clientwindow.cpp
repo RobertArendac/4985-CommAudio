@@ -1,3 +1,20 @@
+/*---------------------------------------------------------------------------------------
+--	SOURCE FILE:	clientwindow.cpp
+--
+--	FUNCTIONS:
+--
+--	DATE:			March 19, 2017
+--
+--	DESIGNERS: Alex Zielinski
+--
+--	PROGRAMMERS: Alex Zielinski
+--
+--	NOTES:
+--      This is the client window where users can connect to a server to listen to songs
+--      (like a radio station). Users can also use a microphone connected to their machine
+--      to talk to other clients connected to the server.
+---------------------------------------------------------------------------------------*/
+
 #include "clientwindow.h"
 #include "ui_clientwindow.h"
 
