@@ -25,11 +25,17 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    wrappers.cpp
+    wrappers.cpp \
+    clientwindow.cpp \
+    serverwindow.cpp
 
 HEADERS  += mainwindow.h \
-    wrappers.h
+    wrappers.h \
+    clientwindow.h \
+    serverwindow.h
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+    clientwindow.ui \
+    serverwindow.ui
 
 win32:LIBS += ws2_32.lib
