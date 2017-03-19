@@ -18,7 +18,7 @@ public:
     ~ClientWindow();
 
 private slots:
-    void on_pushButton_clicked();
+    void on_cltConnect_clicked();
     void on_cltSelectAllButton_clicked();
     void on_cltUpdateButton_clicked();
     void on_cltUploadButton_clicked();

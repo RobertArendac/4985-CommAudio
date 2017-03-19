@@ -36,16 +36,6 @@
       </rect>
      </property>
     </widget>
-    <widget class="QLineEdit" name="cltPortEditText">
-     <property name="geometry">
-      <rect>
-       <x>70</x>
-       <y>50</y>
-       <width>113</width>
-       <height>20</height>
-      </rect>
-     </property>
-    </widget>
     <widget class="QLabel" name="cltHostIPLabel">
      <property name="geometry">
       <rect>
@@ -85,7 +75,7 @@
       <string>Status: </string>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButton">
+    <widget class="QPushButton" name="cltConnect">
      <property name="geometry">
       <rect>
        <x>30</x>
@@ -96,6 +86,22 @@
      </property>
      <property name="text">
       <string>Connect</string>
+     </property>
+    </widget>
+    <widget class="QSpinBox" name="cltPortSpinner">
+     <property name="geometry">
+      <rect>
+       <x>70</x>
+       <y>50</y>
+       <width>111</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="maximum">
+      <number>10000</number>
+     </property>
+     <property name="value">
+      <number>5150</number>
      </property>
     </widget>
    </widget>
