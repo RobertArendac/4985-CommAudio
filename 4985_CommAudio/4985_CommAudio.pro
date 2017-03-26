@@ -46,5 +46,3 @@ FORMS    += mainwindow.ui \
 CONFIG += console
 
 win32:LIBS += ws2_32.lib
-
-INCLUDEPATH += C:\Program Files\boost\boost_1_63_0

@@ -19,6 +19,7 @@
 #include "serverwindow.h"
 #include "ui_serverwindow.h"
 #include "server.h"
+#include <QDir>
 
 #define CLIENT_SIZE 32
 
@@ -31,6 +32,8 @@ ServerWindow::ServerWindow(QWidget *parent) :
     // Start a winsock session
     if (!startWinsock())
         return;
+
+    createSongList();
 }
 
 ServerWindow::~ServerWindow()
@@ -56,7 +59,7 @@ ServerWindow::~ServerWindow()
 ---------------------------------------------------------------------------------------*/
 void ServerWindow::on_srvStartStopButton_clicked()
 {
-    runTCPServer(this, 5150);
+    CreateThread(NULL, 0, ServerWindow::tcpServerThread, this, 0, NULL);
     CreateThread(NULL, 0, ServerWindow::udpServerThread, this, 0, NULL);
 }
 
@@ -104,9 +107,23 @@ DWORD WINAPI ServerWindow::udpServerThread(void *arg)
     return 0;
 }
 
+DWORD WINAPI ServerWindow::tcpServerThread(void *arg)
+{
+    ServerWindow *sw = (ServerWindow *)arg;
+
+    runTCPServer(sw, 5150);
+
+    return 0;
+}
+
 void ServerWindow::createSongList()
 {
-
+    QDir directory("../Music");
+    QStringList list = directory.entryList();
+    for (auto song : list)
+    {
+        ui->musicList->addItem(song);
+    }
 }
 
 /********************************************************

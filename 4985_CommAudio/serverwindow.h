@@ -20,6 +20,7 @@ public:
     ~ServerWindow();
 
     static DWORD WINAPI udpServerThread(void *arg);
+    static DWORD WINAPI tcpServerThread(void *arg);
     void createSongList();
     void updateClients(const char *client);
 

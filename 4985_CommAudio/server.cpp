@@ -72,7 +72,7 @@ void runTCPServer(ServerWindow *sw, int port)
 
         sw->updateClients(inet_ntoa(clientAddr.sin_addr));
         clientMap.insert(std::pair<SOCKET, std::string>(acceptSocket, inet_ntoa(clientAddr.sin_addr)));
-        //printf("Client %s connected\n", inet_ntoa(clientAddr.sin_addr));
+        printf("Client %s connected\n", inet_ntoa(clientAddr.sin_addr));
 
         CreateThread(NULL, 0, tcpClient, &acceptSocket, 0, NULL);
     }
