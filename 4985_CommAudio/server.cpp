@@ -1,4 +1,7 @@
 #include "server.h"
+#include <map>
+
+std::map<SOCKET, std::string> clientMap;
 
 /*--------------------------------------------------------------------------------------
 --  INTERFACE:     SOCKADDR_IN serverCreateAddress(int port)
@@ -47,10 +50,6 @@ void runTCPServer(ServerWindow *sw, int port)
     SOCKET listenSocket, acceptSocket;
     SOCKADDR_IN addr, clientAddr;
 
-    // Start Winsock session
-    if (!startWinsock())
-        return;
-
     // Create socket for listening
     if ((listenSocket = createSocket(SOCK_STREAM, IPPROTO_TCP)) == NULL)
         return;
@@ -71,8 +70,9 @@ void runTCPServer(ServerWindow *sw, int port)
         if (!acceptingSocket(&acceptSocket, listenSocket, (SOCKADDR *)&clientAddr))
             return;
 
-        // Just for confirmation, take out when we have UI client list set up
-        printf("Client %s connected\n", inet_ntoa(clientAddr.sin_addr));
+        sw->updateClients(inet_ntoa(clientAddr.sin_addr));
+        clientMap.insert(std::pair<SOCKET, std::string>(acceptSocket, inet_ntoa(clientAddr.sin_addr)));
+        //printf("Client %s connected\n", inet_ntoa(clientAddr.sin_addr));
 
         CreateThread(NULL, 0, tcpClient, &acceptSocket, 0, NULL);
     }
@@ -106,10 +106,6 @@ DWORD WINAPI tcpClient(void *arg) {
 void runUDPServer(ServerWindow *sw, int port) {
     SOCKADDR_IN addr;
     SOCKET acceptSocket;
-
-    // Start winsock
-    if (!startWinsock())
-        return;
 
     // Init address info
     addr = serverCreateAddress(port);

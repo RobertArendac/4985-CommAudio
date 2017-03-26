@@ -20,11 +20,17 @@
 #include "ui_serverwindow.h"
 #include "server.h"
 
+#define CLIENT_SIZE 32
+
 ServerWindow::ServerWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::ServerWindow)
 {
     ui->setupUi(this);
+
+    // Start a winsock session
+    if (!startWinsock())
+        return;
 }
 
 ServerWindow::~ServerWindow()
@@ -89,10 +95,36 @@ void ServerWindow::on_srvPlaySelectedTrackButton_clicked()
 
 }
 
-DWORD WINAPI ServerWindow::udpServerThread(void *arg) {
+DWORD WINAPI ServerWindow::udpServerThread(void *arg)
+{
     ServerWindow *sw = (ServerWindow *)arg;
 
     runUDPServer(sw, 5150);
 
     return 0;
+}
+
+void ServerWindow::createSongList()
+{
+
+}
+
+/********************************************************
+ *  Function:       void ServerWindow::updateClients(const char *client)
+ *                      const char *client: Client IP address
+ *
+ *  Programmer:     Robert Arendac
+ *
+ *  Created:        Mar 25 2017
+ *
+ *  Modified:
+ *
+ *  Desc:
+ *      Adds a connected client to the servers client list
+ *******************************************************/
+void ServerWindow::updateClients(const char *client)
+{
+    char newClient[CLIENT_SIZE];
+    sprintf(newClient, "%s", client);
+    ui->srvClientListWidgest->addItem(newClient);
 }

@@ -20,6 +20,8 @@ public:
     ~ServerWindow();
 
     static DWORD WINAPI udpServerThread(void *arg);
+    void createSongList();
+    void updateClients(const char *client);
 
 private slots:
     void on_srvStartStopButton_clicked();
