@@ -21,7 +21,7 @@
 #include "wrappers.h"
 
 typedef struct {
-    char *cltIP;
+    char cltIP[16];
     int cltPort;
     ClientWindow *window;
 } ThreadInfo;
@@ -68,7 +68,8 @@ void ClientWindow::on_cltConnect_clicked()
     strcpy(ti->cltIP, ui->cltHostIPEditText->text().toStdString().c_str());
     ti->cltPort = ui->cltPortSpinner->value();
     ti->window = this;
-    CreateThread(NULL, 0, &ClientWindow::udpThread, (void *)ti, 0, NULL);
+
+    CreateThread(NULL, 0, ClientWindow::udpClientThread, (void *)ti, 0, NULL);
 }
 
 void ClientWindow::on_cltSelectAllButton_clicked()
@@ -96,7 +97,7 @@ void ClientWindow::on_cltDownloadSelectedTrackButton_clicked()
 
 }
 
-DWORD WINAPI ClientWindow::udpThread(void *arg) {
+DWORD WINAPI ClientWindow::udpClientThread(void *arg) {
     ThreadInfo *ti = (ThreadInfo *)arg;
     runUDPClient(ti->window, ti->cltIP, ti->cltPort);
 

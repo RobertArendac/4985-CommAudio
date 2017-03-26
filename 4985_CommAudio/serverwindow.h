@@ -4,6 +4,8 @@
 #define SERVERWINDOW_H
 
 #include <QMainWindow>
+#include <WinSock2.h>
+#include <Windows.h>
 
 namespace Ui {
 class ServerWindow;
@@ -16,6 +18,8 @@ class ServerWindow : public QMainWindow
 public:
     explicit ServerWindow(QWidget *parent = 0);
     ~ServerWindow();
+
+    static DWORD WINAPI udpServerThread(void *arg);
 
 private slots:
     void on_srvStartStopButton_clicked();

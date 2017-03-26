@@ -51,6 +51,7 @@ ServerWindow::~ServerWindow()
 void ServerWindow::on_srvStartStopButton_clicked()
 {
     runTCPServer(this, 5150);
+    CreateThread(NULL, 0, ServerWindow::udpServerThread, this, 0, NULL);
 }
 
 void ServerWindow::on_srvTrackPreviousButton_clicked()
@@ -86,4 +87,12 @@ void ServerWindow::on_srvShuffleRadioButton_clicked()
 void ServerWindow::on_srvPlaySelectedTrackButton_clicked()
 {
 
+}
+
+DWORD WINAPI ServerWindow::udpServerThread(void *arg) {
+    ServerWindow *sw = (ServerWindow *)arg;
+
+    runUDPServer(sw, 5150);
+
+    return 0;
 }

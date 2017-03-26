@@ -35,6 +35,9 @@
        <height>20</height>
       </rect>
      </property>
+     <property name="text">
+      <string>127.0.0.1</string>
+     </property>
     </widget>
     <widget class="QLabel" name="cltHostIPLabel">
      <property name="geometry">

@@ -19,7 +19,7 @@ public:
     explicit ClientWindow(QWidget *parent = 0);
     ~ClientWindow();
 
-    static DWORD WINAPI udpThread(void *);
+    static DWORD WINAPI udpClientThread(void *);
 
 private slots:
     void on_cltConnect_clicked();
