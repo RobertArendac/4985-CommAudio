@@ -4,6 +4,8 @@
 #define CLIENTWINDOW_H
 
 #include <QMainWindow>
+#include <WinSock2.h>
+#include <Windows.h>
 
 namespace Ui {
 class ClientWindow;
@@ -16,6 +18,8 @@ class ClientWindow : public QMainWindow
 public:
     explicit ClientWindow(QWidget *parent = 0);
     ~ClientWindow();
+
+    static DWORD WINAPI udpThread(void *);
 
 private slots:
     void on_cltConnect_clicked();

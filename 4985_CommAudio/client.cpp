@@ -47,10 +47,6 @@ void runTCPClient(ClientWindow *cw, const char *ip, int port) {
     SOCKET sck;
     SOCKADDR_IN addr;
 
-    // Start a winsock session
-    if (!startWinsock())
-        return;
-
     // Create a TCP socket
     if ((sck = createSocket(SOCK_STREAM, IPPROTO_TCP)) == NULL)
         return;
@@ -95,10 +91,6 @@ void runTCPClient(ClientWindow *cw, const char *ip, int port) {
 void runUDPClient(ClientWindow *cw, const char *ip, int port) {
     SOCKET sck;
     SOCKADDR_IN addr;
-
-    // Start a winsock session
-    if (!startWinsock())
-        return;
 
     // Create a UDP socket
     if ((sck = createSocket(SOCK_DGRAM, IPPROTO_UDP)) == NULL)

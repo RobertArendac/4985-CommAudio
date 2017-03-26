@@ -18,12 +18,23 @@
 #include "clientwindow.h"
 #include "ui_clientwindow.h"
 #include "client.h"
+#include "wrappers.h"
+
+typedef struct {
+    char *cltIP;
+    int cltPort;
+    ClientWindow *window;
+} ThreadInfo;
 
 ClientWindow::ClientWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::ClientWindow)
 {
     ui->setupUi(this);
+
+    // Start a winsock session
+    if (!startWinsock())
+        return;
 }
 
 ClientWindow::~ClientWindow()
@@ -48,7 +59,16 @@ ClientWindow::~ClientWindow()
 ---------------------------------------------------------------------------------------*/
 void ClientWindow::on_cltConnect_clicked()
 {
+    ThreadInfo *ti;
+
+    ti = (ThreadInfo *)malloc(sizeof(ThreadInfo));
+
     runTCPClient(this, ui->cltHostIPEditText->text().toStdString().c_str(), ui->cltPortSpinner->value());
+
+    strcpy(ti->cltIP, ui->cltHostIPEditText->text().toStdString().c_str());
+    ti->cltPort = ui->cltPortSpinner->value();
+    ti->window = this;
+    CreateThread(NULL, 0, &ClientWindow::udpThread, (void *)ti, 0, NULL);
 }
 
 void ClientWindow::on_cltSelectAllButton_clicked()
@@ -74,4 +94,11 @@ void ClientWindow::on_cltPlaySelectedTrackButton_clicked()
 void ClientWindow::on_cltDownloadSelectedTrackButton_clicked()
 {
 
+}
+
+DWORD WINAPI ClientWindow::udpThread(void *arg) {
+    ThreadInfo *ti = (ThreadInfo *)arg;
+    runUDPClient(ti->window, ti->cltIP, ti->cltPort);
+
+    return 0;
 }
