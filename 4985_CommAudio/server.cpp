@@ -15,7 +15,7 @@ std::map<SOCKET, std::string> clientMap;
 --
 --  DESIGNER:      Robert Arendac
 --
---  PROGRAMMER:    RobertArendac
+--  PROGRAMMER:    Robert Arendac
 --
 --  NOTES:
 --      Fills an address struct.  IP is any, port is passed in, used for TCP.
@@ -88,6 +88,8 @@ DWORD WINAPI tcpClient(void *arg)
     DWORD sendBytes;
     SocketInformation *si;
     char music[1024];
+    WSAEVENT events[1];
+    DWORD result;
 
     QStringList songs = ServerWindow::getSongs();
     for (auto song : songs)
@@ -108,6 +110,10 @@ DWORD WINAPI tcpClient(void *arg)
     si->dataBuf.len = 1024;
 
     WSASend(si->socket, &(si->dataBuf), 1, &sendBytes, 0, &(si->overlapped), clientRoutine);
+
+    events[0] = WSACreateEvent();
+    if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
+        fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
 
     return 0;
 }
@@ -132,9 +138,11 @@ void CALLBACK clientRoutine(DWORD error, DWORD, LPWSAOVERLAPPED, DWORD) {
 --  PROGRAMMER:    RobertArendac
 --
 --  NOTES:
---      Starts up a UDP server.  Will be responsible for streaming audio.
+--      Starts up a UDP server.  Will be responsible for streaming audio.  Also sets up
+--      multicasting
 ---------------------------------------------------------------------------------------*/
-void runUDPServer(ServerWindow *sw, int port) {
+void runUDPServer(ServerWindow *sw, int port)
+{
     SOCKADDR_IN addr, cltDest;
     SOCKET acceptSocket;
     struct ip_mreq stMreq;
@@ -164,7 +172,8 @@ void runUDPServer(ServerWindow *sw, int port) {
 
     cltDest = clientCreateAddress(MCAST_ADDR, MCAST_PORT);
 
-    while (1) {
+    while (1)
+    {
         // Do stuff
     }
 }

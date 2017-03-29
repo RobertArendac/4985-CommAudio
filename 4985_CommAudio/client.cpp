@@ -52,6 +52,8 @@ void runTCPClient(ClientWindow *cw, const char *ip, int port) {
     SOCKADDR_IN addr;
     DWORD recvBytes, flags = 0;
     SocketInformation *si;
+    WSAEVENT events[1];
+    DWORD result;
 
     client = cw;
 
@@ -83,8 +85,11 @@ void runTCPClient(ClientWindow *cw, const char *ip, int port) {
     si->dataBuf.buf = si->buffer;
     WSARecv(si->socket, &(si->dataBuf), 1, &recvBytes, &flags, &(si->overlapped), songRoutine);
 
-    // TAKE OUT WHEN THERE IS MORE CLIENT CODE
-    Sleep(5000);
+    events[0] = WSACreateEvent();
+    if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
+        fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
+
+    while (1);
 
     printf("closing socket");
     closesocket(sck);
@@ -132,7 +137,7 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port) {
         return;
 
     memset((char *)&srvAddr, 0, sizeof(SOCKADDR_IN));
-    srvAddr = serverCreateAddress(port);
+    srvAddr = serverCreateAddress(MCAST_PORT);
 
     if (!bindSocket(sck, &srvAddr))
         return;
@@ -143,9 +148,9 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port) {
     if (!setServOptions(sck, IP_ADD_MEMBERSHIP, (char *)&stMreq))
         return;
 
-    // Do stuff here
+    while (1);
 
-    printf("closing socket");
+    printf("closing socket\n");
     closesocket(sck);
     WSACleanup();
 }
