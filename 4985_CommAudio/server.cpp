@@ -126,11 +126,11 @@ void runUDPServer(ServerWindow *sw, int port) {
     stMreq.imr_multiaddr.s_addr = inet_addr(MCAST_ADDR);
     stMreq.imr_interface.s_addr = INADDR_ANY;
 
-    if (!setOptions(acceptSocket, IP_ADD_MEMBERSHIP, (char *)&stMreq))
+    if (!setServOptions(acceptSocket, IP_ADD_MEMBERSHIP, (char *)&stMreq))
         return;
-    if (!setOptions(acceptSocket, IP_MULTICAST_TTL, (char *)&ttl))
+    if (!setServOptions(acceptSocket, IP_MULTICAST_TTL, (char *)&ttl))
         return;
-    if (!setOptions(acceptSocket, IP_MULTICAST_LOOP, (char *)&flag))
+    if (!setServOptions(acceptSocket, IP_MULTICAST_LOOP, (char *)&flag))
         return;
 
     cltDest = clientCreateAddress(MCAST_ADDR, MCAST_PORT);

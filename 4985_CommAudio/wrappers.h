@@ -16,7 +16,8 @@ int listenConnection(SOCKET s);
 int connectHost(const char *host);
 int connectToServer(SOCKET s, SOCKADDR_IN *addr);
 int acceptingSocket(SOCKET *acceptSocket, SOCKET listenSocket, SOCKADDR *addr);
-int setOptions(SOCKET sck, int option, char *optval);
+int setServOptions(SOCKET sck, int option, char *optval);
+int setCltOptions(SOCKET sck, int option, char *optval);
 SOCKET createSocket(int type, int protocol);
 
 #endif // WRAPPERS_H

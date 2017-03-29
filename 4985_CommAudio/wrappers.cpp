@@ -166,10 +166,22 @@ int acceptingSocket(SOCKET *acceptSocket, SOCKET listenSocket, SOCKADDR *addr)
     return 1;
 }
 
-int setOptions(SOCKET sck, int option, char *optval)
+int setServOptions(SOCKET sck, int option, char *optval)
 {
     int optSize = sizeof(optval);
     if (setsockopt(sck, IPPROTO_IP, option, optval, optSize) != 0)
+    {
+        fprintf(stderr, "setsockopt() failed: %d", WSAGetLastError());
+        return 0;
+    }
+
+    return 1;
+}
+
+int setCltOptions(SOCKET sck, int option, char *optval)
+{
+    int optSize = sizeof(optval);
+    if (setsockopt(sck, SOL_SOCKET, option, optval, optSize) != 0)
     {
         fprintf(stderr, "setsockopt() failed: %d", WSAGetLastError());
         return 0;

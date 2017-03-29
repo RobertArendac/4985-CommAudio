@@ -1,4 +1,6 @@
 #include "client.h"
+#include "server.h"
+#include <WS2tcpip.h>
 
 /*--------------------------------------------------------------------------------------
 --  INTERFACE:     SOCKADDR_IN serverCreateAddress(const char *host, int port)
@@ -90,7 +92,9 @@ void runTCPClient(ClientWindow *cw, const char *ip, int port) {
 ---------------------------------------------------------------------------------------*/
 void runUDPClient(ClientWindow *cw, const char *ip, int port) {
     SOCKET sck;
-    SOCKADDR_IN addr;
+    SOCKADDR_IN addr, srvAddr;
+    struct ip_mreq stMreq;
+    int flag = 1;
 
     // Create a UDP socket
     if ((sck = createSocket(SOCK_DGRAM, IPPROTO_UDP)) == NULL)
@@ -104,6 +108,20 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port) {
     memset((char *)&addr, 0, sizeof(SOCKADDR_IN));
     addr = clientCreateAddress(ip, port);
 
+    if (!setCltOptions(sck, SO_REUSEADDR, (char *)&flag))
+        return;
+
+    memset((char *)&srvAddr, 0, sizeof(SOCKADDR_IN));
+    srvAddr = serverCreateAddress(port);
+
+    if (!bindSocket(sck, &srvAddr))
+        return;
+
+    stMreq.imr_multiaddr.s_addr = inet_addr(MCAST_ADDR);
+    stMreq.imr_interface.s_addr = INADDR_ANY;
+
+    if (!setServOptions(sck, IP_ADD_MEMBERSHIP, (char *)&stMreq))
+        return;
 
     // Do stuff here
 
