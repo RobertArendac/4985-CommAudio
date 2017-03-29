@@ -8,8 +8,9 @@
 
 #define MCAST_ADDR  "234.5.6.7"
 #define MCAST_PORT  8910
-#define MCAST_TTL   32
+#define MCAST_TTL   32  //Kind of an arbitrary setting, I don't know what's best here...
 
+// Hold all the information associated with a socket
 typedef struct SocketInformation {
     OVERLAPPED overlapped;
     char buffer[1024];

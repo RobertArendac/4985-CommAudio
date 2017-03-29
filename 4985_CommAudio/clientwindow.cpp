@@ -54,8 +54,7 @@ ClientWindow::~ClientWindow()
 --  PROGRAMMER:    RobertArendac
 --
 --  NOTES:
---      Starts a TCP client and connect to a host on a port, both obtained from the UI.
---      NOTE: Also need to run UDP on separate thread.
+--      Starts a TCP/UDP client and connect to a host on a port, both obtained from the UI.
 ---------------------------------------------------------------------------------------*/
 void ClientWindow::on_cltConnect_clicked()
 {
@@ -96,6 +95,21 @@ void ClientWindow::on_cltDownloadSelectedTrackButton_clicked()
 
 }
 
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     DWORD WINAPI ServerWindow::tcpServerThread(void *arg)
+--                     void *arg: ServerWindow to pass to the TCP server
+--
+--  RETURNS:       Thread exit condition
+--
+--  DATE:          March 25, 2017
+--
+--  DESIGNER:      Robert Arendac
+--
+--  PROGRAMMER:    Robert Arendac
+--
+--  NOTES:
+--      Simple thread that starts the UDP client.
+---------------------------------------------------------------------------------------*/
 DWORD WINAPI ClientWindow::udpClientThread(void *arg) {
     ThreadInfo *ti = (ThreadInfo *)arg;
     runUDPClient(ti->window, ti->cltIP, ti->cltPort);
@@ -103,6 +117,21 @@ DWORD WINAPI ClientWindow::udpClientThread(void *arg) {
     return 0;
 }
 
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void ClientWindow::updateSongs(QStringList songs)
+--                     QStringList songs: String list of songs
+--
+--  RETURNS:       void
+--
+--  DATE:          March 29, 2017
+--
+--  DESIGNER:      Robert Arendac
+--
+--  PROGRAMMER:    Robert Arendac
+--
+--  NOTES:
+--      Adds each song in the song list to the GUI.
+---------------------------------------------------------------------------------------*/
 void ClientWindow::updateSongs(QStringList songs)
 {
     for (auto song : songs)

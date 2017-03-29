@@ -98,6 +98,21 @@ void ServerWindow::on_srvPlaySelectedTrackButton_clicked()
 
 }
 
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     DWORD WINAPI ServerWindow::tcpServerThread(void *arg)
+--                     void *arg: ServerWindow to pass to the TCP server
+--
+--  RETURNS:       Thread exit condition
+--
+--  DATE:          March 25, 2017
+--
+--  DESIGNER:      Robert Arendac
+--
+--  PROGRAMMER:    Robert Arendac
+--
+--  NOTES:
+--      Simple thread that starts the UDP server.
+---------------------------------------------------------------------------------------*/
 DWORD WINAPI ServerWindow::udpServerThread(void *arg)
 {
     ServerWindow *sw = (ServerWindow *)arg;
@@ -107,6 +122,21 @@ DWORD WINAPI ServerWindow::udpServerThread(void *arg)
     return 0;
 }
 
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     DWORD WINAPI ServerWindow::tcpServerThread(void *arg)
+--                     void *arg: ServerWindow to pass to the TCP server
+--
+--  RETURNS:       Thread exit condition
+--
+--  DATE:          March 25, 2017
+--
+--  DESIGNER:      Robert Arendac
+--
+--  PROGRAMMER:    Robert Arendac
+--
+--  NOTES:
+--      Simple thread that starts the TCP server.
+---------------------------------------------------------------------------------------*/
 DWORD WINAPI ServerWindow::tcpServerThread(void *arg)
 {
     ServerWindow *sw = (ServerWindow *)arg;
@@ -116,6 +146,20 @@ DWORD WINAPI ServerWindow::tcpServerThread(void *arg)
     return 0;
 }
 
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     QStringList ServerWindow::getSongs()
+--
+--  RETURNS:       A string list of all songs
+--
+--  DATE:          March 26, 2017
+--
+--  DESIGNER:      Robert Arendac
+--
+--  PROGRAMMER:    Robert Arendac
+--
+--  NOTES:
+--      Static method that gets the songs in the Music folder and returns them
+---------------------------------------------------------------------------------------*/
 QStringList ServerWindow::getSongs()
 {
     QDir directory("../Music");
@@ -124,6 +168,20 @@ QStringList ServerWindow::getSongs()
     return songs;
 }
 
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void ServerWindow::createSongList()
+--
+--  RETURNS:       void
+--
+--  DATE:          March 26, 2017
+--
+--  DESIGNER:      Robert Arendac
+--
+--  PROGRAMMER:    Robert Arendac
+--
+--  NOTES:
+--      Gets the songs in the Music folder and adds them to the GUI
+---------------------------------------------------------------------------------------*/
 void ServerWindow::createSongList()
 {
     QStringList list = getSongs();

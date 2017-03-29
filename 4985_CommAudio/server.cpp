@@ -20,7 +20,8 @@ std::map<SOCKET, std::string> clientMap;
 --  NOTES:
 --      Fills an address struct.  IP is any, port is passed in, used for TCP.
 ---------------------------------------------------------------------------------------*/
-SOCKADDR_IN serverCreateAddress(int port) {
+SOCKADDR_IN serverCreateAddress(int port)
+{
     SOCKADDR_IN addr;
 
     addr.sin_family = AF_INET;
@@ -41,7 +42,7 @@ SOCKADDR_IN serverCreateAddress(int port) {
 --
 --  DESIGNER:      Robert Arendac
 --
---  PROGRAMMER:    RobertArendac
+--  PROGRAMMER:    Robert Arendac
 --
 --  NOTES:
 --      Starts up a TCP server.  Each new client will have its own dedicated thread to
@@ -68,7 +69,8 @@ void runTCPServer(ServerWindow *sw, int port)
         return;
 
     // Accept incoming connections and put each client on thread
-    while (1) {
+    while (1)
+    {
         if (!acceptingSocket(&acceptSocket, listenSocket, (SOCKADDR *)&clientAddr))
             return;
 
@@ -81,24 +83,43 @@ void runTCPServer(ServerWindow *sw, int port)
 
 }
 
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     DWORD WINAPI tcpClient(void *arg)
+--                     void *arg: Socket bound to specific client
+--
+--  RETURNS:       Thread exit information
+--
+--  DATE:          March 25, 2017
+--
+--  DESIGNER:      Robert Arendac
+--
+--  PROGRAMMER:    Robert Arendac
+--
+--  NOTES:
+--      Thread for handling each client.  Will build a song list and send it out to the
+--      client.
+---------------------------------------------------------------------------------------*/
 DWORD WINAPI tcpClient(void *arg)
 {
-    SOCKET *clientSck = (SOCKET *)arg;
-    std::string songlist;
-    DWORD sendBytes;
-    SocketInformation *si;
-    char music[1024];
-    WSAEVENT events[1];
-    DWORD result;
+    SOCKET *clientSck = (SOCKET *)arg;  //Client socket
+    std::string songlist;               //String of all songs
+    DWORD sendBytes;                    //Bytes to be sent
+    SocketInformation *si;              //Struct holding socket info
+    char music[1024];                   //C-string of songs
+    WSAEVENT events[1];                 //Array of events (just one)
+    DWORD result;                       //Result of waiting for events
 
+    // Build the song list
     QStringList songs = ServerWindow::getSongs();
     for (auto song : songs)
     {
         songlist += song.toStdString() + "\n";
     }
 
+    // Copy the song list to a c-string, can't send std::string
     strcpy(music, songlist.c_str());
 
+    // Fill out the socket info
     si = (SocketInformation *)malloc(sizeof(SocketInformation));
     ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
     memset(si->buffer, 0, sizeof(si->buffer));
@@ -109,8 +130,10 @@ DWORD WINAPI tcpClient(void *arg)
     si->dataBuf.buf = si->buffer;
     si->dataBuf.len = 1024;
 
+    // Send the song list
     WSASend(si->socket, &(si->dataBuf), 1, &sendBytes, 0, &(si->overlapped), clientRoutine);
 
+    // Wait for the send to complete
     events[0] = WSACreateEvent();
     if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
         fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
@@ -118,8 +141,27 @@ DWORD WINAPI tcpClient(void *arg)
     return 0;
 }
 
-void CALLBACK clientRoutine(DWORD error, DWORD, LPWSAOVERLAPPED, DWORD) {
-    if (error) {
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void CALLBACK clientRoutine(DWORD error, DWORD, LPWSAOVERLAPPED, DWORD)
+--                     DWORD error: error that occured during WSASend()
+--                     Other args unused
+--
+--  RETURNS:       void
+--
+--  DATE:          March 29, 2017
+--
+--  DESIGNER:      Robert Arendac
+--
+--  PROGRAMMER:    Robert Arendac
+--
+--  NOTES:
+--      Completion routine for sending song list.  In this case, we just want to check
+--      for error.
+---------------------------------------------------------------------------------------*/
+void CALLBACK clientRoutine(DWORD error, DWORD, LPWSAOVERLAPPED, DWORD)
+{
+    if (error)
+    {
         fprintf(stderr, "Error: %d\n", error);
     }
 }
@@ -133,6 +175,8 @@ void CALLBACK clientRoutine(DWORD error, DWORD, LPWSAOVERLAPPED, DWORD) {
 --
 --  DATE:          March 19, 2017
 --
+--  MODIFIED:      March 28, 2017 - Added multicasting capabilities
+--
 --  DESIGNER:      Robert Arendac
 --
 --  PROGRAMMER:    RobertArendac
@@ -143,11 +187,11 @@ void CALLBACK clientRoutine(DWORD error, DWORD, LPWSAOVERLAPPED, DWORD) {
 ---------------------------------------------------------------------------------------*/
 void runUDPServer(ServerWindow *sw, int port)
 {
-    SOCKADDR_IN addr, cltDest;
-    SOCKET acceptSocket;
-    struct ip_mreq stMreq;
-    u_long ttl = MCAST_TTL;
-    int flag = 0;
+    SOCKADDR_IN addr, cltDest;  //Addresses to receive from and send to
+    SOCKET acceptSocket;        //Connect to send/receive on
+    struct ip_mreq stMreq;      //Struct for multicasting
+    u_long ttl = MCAST_TTL;     //Time to live
+    int flag = 0;               //False flag
 
     // Init address info
     addr = serverCreateAddress(port);
@@ -160,9 +204,11 @@ void runUDPServer(ServerWindow *sw, int port)
     if (!bindSocket(acceptSocket, &addr))
         return;
 
+    // Multicast interface
     stMreq.imr_multiaddr.s_addr = inet_addr(MCAST_ADDR);
     stMreq.imr_interface.s_addr = INADDR_ANY;
 
+    // Join multicast group, specify time-to-live, and disable loop
     if (!setServOptions(acceptSocket, IP_ADD_MEMBERSHIP, (char *)&stMreq))
         return;
     if (!setServOptions(acceptSocket, IP_MULTICAST_TTL, (char *)&ttl))
