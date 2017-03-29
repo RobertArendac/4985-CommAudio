@@ -102,7 +102,7 @@ DWORD WINAPI ServerWindow::udpServerThread(void *arg)
 {
     ServerWindow *sw = (ServerWindow *)arg;
 
-    runUDPServer(sw, 5150);
+    runUDPServer(sw, 7000);
 
     return 0;
 }

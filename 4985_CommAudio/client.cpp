@@ -2,6 +2,8 @@
 #include "server.h"
 #include <WS2tcpip.h>
 
+ClientWindow *client;
+
 /*--------------------------------------------------------------------------------------
 --  INTERFACE:     SOCKADDR_IN serverCreateAddress(const char *host, int port)
 --                     const char *host: Host to connect to
@@ -50,6 +52,8 @@ void runTCPClient(ClientWindow *cw, const char *ip, int port) {
     SOCKADDR_IN addr;
     DWORD recvBytes, flags = 0;
     SocketInformation *si;
+
+    client = cw;
 
     // Create a TCP socket
     if ((sck = createSocket(SOCK_STREAM, IPPROTO_TCP)) == NULL)
@@ -148,6 +152,8 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port) {
 
 void CALLBACK songRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags) {
     DWORD recvBytes;
+    char *token;
+    QStringList songs;
 
     SocketInformation *si = (SocketInformation *)overlapped;
 
@@ -160,5 +166,12 @@ void CALLBACK songRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED o
         return;
     }
 
-    fprintf(stdout, "\n%s\n", si->dataBuf.buf);
+    token = strtok(si->dataBuf.buf, "\n");
+    while (token != NULL)
+    {
+        songs.append(token);
+        token = strtok(NULL, "\n");
+    }
+
+    client->updateSongs(songs);
 }

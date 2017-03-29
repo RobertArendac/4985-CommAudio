@@ -102,3 +102,11 @@ DWORD WINAPI ClientWindow::udpClientThread(void *arg) {
 
     return 0;
 }
+
+void ClientWindow::updateSongs(QStringList songs)
+{
+    for (auto song : songs)
+    {
+        ui->songList->addItem(song);
+    }
+}
