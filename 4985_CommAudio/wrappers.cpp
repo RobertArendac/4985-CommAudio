@@ -157,10 +157,35 @@ int connectToServer(SOCKET s, SOCKADDR_IN *addr) {
 --  NOTES:
 --      Wraps the accept() call.  Will return success/failure
 ---------------------------------------------------------------------------------------*/
-int acceptingSocket(SOCKET *acceptSocket, SOCKET listenSocket, SOCKADDR *addr) {
+int acceptingSocket(SOCKET *acceptSocket, SOCKET listenSocket, SOCKADDR *addr)
+{
     int size = sizeof(*addr);
     if ((*acceptSocket = accept(listenSocket, addr, &size)) == NULL)
         return 0;
+
+    return 1;
+}
+
+int setServOptions(SOCKET sck, int option, char *optval)
+{
+    int optSize = sizeof(optval);
+    if (setsockopt(sck, IPPROTO_IP, option, optval, optSize) != 0)
+    {
+        fprintf(stderr, "setsockopt() failed: %d", WSAGetLastError());
+        return 0;
+    }
+
+    return 1;
+}
+
+int setCltOptions(SOCKET sck, int option, char *optval)
+{
+    int optSize = sizeof(optval);
+    if (setsockopt(sck, SOL_SOCKET, option, optval, optSize) != 0)
+    {
+        fprintf(stderr, "setsockopt() failed: %d", WSAGetLastError());
+        return 0;
+    }
 
     return 1;
 }

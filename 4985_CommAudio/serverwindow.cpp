@@ -19,12 +19,21 @@
 #include "serverwindow.h"
 #include "ui_serverwindow.h"
 #include "server.h"
+#include <QDir>
+
+#define CLIENT_SIZE 32
 
 ServerWindow::ServerWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::ServerWindow)
 {
     ui->setupUi(this);
+
+    // Start a winsock session
+    if (!startWinsock())
+        return;
+
+    createSongList();
 }
 
 ServerWindow::~ServerWindow()
@@ -50,7 +59,8 @@ ServerWindow::~ServerWindow()
 ---------------------------------------------------------------------------------------*/
 void ServerWindow::on_srvStartStopButton_clicked()
 {
-    runTCPServer(this, 5150);
+    CreateThread(NULL, 0, ServerWindow::tcpServerThread, this, 0, NULL);
+    CreateThread(NULL, 0, ServerWindow::udpServerThread, this, 0, NULL);
 }
 
 void ServerWindow::on_srvTrackPreviousButton_clicked()
@@ -86,4 +96,117 @@ void ServerWindow::on_srvShuffleRadioButton_clicked()
 void ServerWindow::on_srvPlaySelectedTrackButton_clicked()
 {
 
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     DWORD WINAPI ServerWindow::tcpServerThread(void *arg)
+--                     void *arg: ServerWindow to pass to the TCP server
+--
+--  RETURNS:       Thread exit condition
+--
+--  DATE:          March 25, 2017
+--
+--  DESIGNER:      Robert Arendac
+--
+--  PROGRAMMER:    Robert Arendac
+--
+--  NOTES:
+--      Simple thread that starts the UDP server.
+---------------------------------------------------------------------------------------*/
+DWORD WINAPI ServerWindow::udpServerThread(void *arg)
+{
+    ServerWindow *sw = (ServerWindow *)arg;
+
+    runUDPServer(sw, 7000);
+
+    return 0;
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     DWORD WINAPI ServerWindow::tcpServerThread(void *arg)
+--                     void *arg: ServerWindow to pass to the TCP server
+--
+--  RETURNS:       Thread exit condition
+--
+--  DATE:          March 25, 2017
+--
+--  DESIGNER:      Robert Arendac
+--
+--  PROGRAMMER:    Robert Arendac
+--
+--  NOTES:
+--      Simple thread that starts the TCP server.
+---------------------------------------------------------------------------------------*/
+DWORD WINAPI ServerWindow::tcpServerThread(void *arg)
+{
+    ServerWindow *sw = (ServerWindow *)arg;
+
+    runTCPServer(sw, 8980);
+
+    return 0;
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     QStringList ServerWindow::getSongs()
+--
+--  RETURNS:       A string list of all songs
+--
+--  DATE:          March 26, 2017
+--
+--  DESIGNER:      Robert Arendac
+--
+--  PROGRAMMER:    Robert Arendac
+--
+--  NOTES:
+--      Static method that gets the songs in the Music folder and returns them
+---------------------------------------------------------------------------------------*/
+QStringList ServerWindow::getSongs()
+{
+    QDir directory("../Music");
+    QStringList songs = directory.entryList();
+
+    return songs;
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void ServerWindow::createSongList()
+--
+--  RETURNS:       void
+--
+--  DATE:          March 26, 2017
+--
+--  DESIGNER:      Robert Arendac
+--
+--  PROGRAMMER:    Robert Arendac
+--
+--  NOTES:
+--      Gets the songs in the Music folder and adds them to the GUI
+---------------------------------------------------------------------------------------*/
+void ServerWindow::createSongList()
+{
+    QStringList list = getSongs();
+    for (auto song : list)
+    {
+        ui->musicList->addItem(song);
+    }
+}
+
+/********************************************************
+ *  Function:       void ServerWindow::updateClients(const char *client)
+ *                      const char *client: Client IP address
+ *
+ *  Programmer:     Robert Arendac
+ *
+ *  Created:        Mar 25 2017
+ *
+ *  Modified:
+ *
+ *  Desc:
+ *      Adds a connected client to the servers client list
+ *******************************************************/
+void ServerWindow::updateClients(const char *client)
+{
+    char newClient[CLIENT_SIZE];
+    sprintf(newClient, "%s", client);
+    ui->srvClientListWidgest->addItem(newClient);
 }

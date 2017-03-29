@@ -18,12 +18,23 @@
 #include "clientwindow.h"
 #include "ui_clientwindow.h"
 #include "client.h"
+#include "wrappers.h"
+
+typedef struct {
+    char cltIP[16];
+    int cltPort;
+    ClientWindow *window;
+} ThreadInfo;
 
 ClientWindow::ClientWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::ClientWindow)
 {
     ui->setupUi(this);
+
+    // Start a winsock session
+    if (!startWinsock())
+        return;
 }
 
 ClientWindow::~ClientWindow()
@@ -43,12 +54,20 @@ ClientWindow::~ClientWindow()
 --  PROGRAMMER:    RobertArendac
 --
 --  NOTES:
---      Starts a TCP client and connect to a host on a port, both obtained from the UI.
---      NOTE: Also need to run UDP on separate thread.
+--      Starts a TCP/UDP client and connect to a host on a port, both obtained from the UI.
 ---------------------------------------------------------------------------------------*/
 void ClientWindow::on_cltConnect_clicked()
 {
-    runTCPClient(this, ui->cltHostIPEditText->text().toStdString().c_str(), ui->cltPortSpinner->value());
+    ThreadInfo *ti;
+
+    ti = (ThreadInfo *)malloc(sizeof(ThreadInfo));
+    strcpy(ti->cltIP, ui->cltHostIPEditText->text().toStdString().c_str());
+    ti->cltPort = ui->cltPortSpinner->value();
+    ti->window = this;
+
+    CreateThread(NULL, 0, ClientWindow::udpClientThread, (void *)ti, 0, NULL);
+    CreateThread(NULL, 0, ClientWindow::tcpClientThread, (void *)ti, 0, NULL);
+
 }
 
 void ClientWindow::on_cltSelectAllButton_clicked()
@@ -74,4 +93,71 @@ void ClientWindow::on_cltPlaySelectedTrackButton_clicked()
 void ClientWindow::on_cltDownloadSelectedTrackButton_clicked()
 {
 
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     DWORD WINAPI ClientWindow::udpClientThread(void *arg)
+--                     void *arg: ClientWindow to pass to the TCP client
+--
+--  RETURNS:       Thread exit condition
+--
+--  DATE:          March 25, 2017
+--
+--  DESIGNER:      Robert Arendac
+--
+--  PROGRAMMER:    Robert Arendac
+--
+--  NOTES:
+--      Simple thread that starts the TCP client.
+---------------------------------------------------------------------------------------*/
+DWORD WINAPI ClientWindow::tcpClientThread(void *arg) {
+    ThreadInfo *ti = (ThreadInfo *)arg;
+    runTCPClient(ti->window, ti->cltIP, 8980);
+
+    return 0;
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     DWORD WINAPI ClientWindow::tcpServerThread(void *arg)
+--                     void *arg: ClientWindow to pass to the udp client
+--
+--  RETURNS:       Thread exit condition
+--
+--  DATE:          March 25, 2017
+--
+--  DESIGNER:      Robert Arendac
+--
+--  PROGRAMMER:    Robert Arendac
+--
+--  NOTES:
+--      Simple thread that starts the UDP client.
+---------------------------------------------------------------------------------------*/
+DWORD WINAPI ClientWindow::udpClientThread(void *arg) {
+    ThreadInfo *ti = (ThreadInfo *)arg;
+    runUDPClient(ti->window, ti->cltIP, ti->cltPort);
+
+    return 0;
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void ClientWindow::updateSongs(QStringList songs)
+--                     QStringList songs: String list of songs
+--
+--  RETURNS:       void
+--
+--  DATE:          March 29, 2017
+--
+--  DESIGNER:      Robert Arendac
+--
+--  PROGRAMMER:    Robert Arendac
+--
+--  NOTES:
+--      Adds each song in the song list to the GUI.
+---------------------------------------------------------------------------------------*/
+void ClientWindow::updateSongs(QStringList songs)
+{
+    for (auto song : songs)
+    {
+        ui->songList->addItem(song);
+    }
 }
