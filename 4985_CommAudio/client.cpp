@@ -99,7 +99,7 @@ void runTCPClient(ClientWindow *cw, const char *ip, int port)
     /* This is here because we do not have a graceful shutdown.  We will need to design all sockets
      * being closed and all TCP and UDP functions ending before performing any sort of cleanup.
      */
-    while (1);
+    while(1);
 
     printf("closing socket");
     closesocket(sck);

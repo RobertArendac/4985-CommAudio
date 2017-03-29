@@ -20,6 +20,7 @@ public:
     ~ClientWindow();
 
     static DWORD WINAPI udpClientThread(void *);
+    static DWORD WINAPI tcpClientThread(void *);
     void updateSongs(QStringList songs);
 
 private slots:

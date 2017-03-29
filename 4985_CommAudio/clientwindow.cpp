@@ -66,8 +66,8 @@ void ClientWindow::on_cltConnect_clicked()
     ti->window = this;
 
     CreateThread(NULL, 0, ClientWindow::udpClientThread, (void *)ti, 0, NULL);
+    CreateThread(NULL, 0, ClientWindow::tcpClientThread, (void *)ti, 0, NULL);
 
-    runTCPClient(this, ti->cltIP, 8980);
 }
 
 void ClientWindow::on_cltSelectAllButton_clicked()
@@ -96,8 +96,30 @@ void ClientWindow::on_cltDownloadSelectedTrackButton_clicked()
 }
 
 /*--------------------------------------------------------------------------------------
---  INTERFACE:     DWORD WINAPI ServerWindow::tcpServerThread(void *arg)
---                     void *arg: ServerWindow to pass to the TCP server
+--  INTERFACE:     DWORD WINAPI ClientWindow::udpClientThread(void *arg)
+--                     void *arg: ClientWindow to pass to the TCP client
+--
+--  RETURNS:       Thread exit condition
+--
+--  DATE:          March 25, 2017
+--
+--  DESIGNER:      Robert Arendac
+--
+--  PROGRAMMER:    Robert Arendac
+--
+--  NOTES:
+--      Simple thread that starts the TCP client.
+---------------------------------------------------------------------------------------*/
+DWORD WINAPI ClientWindow::tcpClientThread(void *arg) {
+    ThreadInfo *ti = (ThreadInfo *)arg;
+    runTCPClient(ti->window, ti->cltIP, 8980);
+
+    return 0;
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     DWORD WINAPI ClientWindow::tcpServerThread(void *arg)
+--                     void *arg: ClientWindow to pass to the udp client
 --
 --  RETURNS:       Thread exit condition
 --
