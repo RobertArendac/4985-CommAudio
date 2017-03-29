@@ -1,5 +1,7 @@
 #include "server.h"
+#include "client.h"
 #include <map>
+#include <WS2tcpip.h>
 
 std::map<SOCKET, std::string> clientMap;
 
@@ -104,8 +106,11 @@ DWORD WINAPI tcpClient(void *arg) {
 --      Starts up a UDP server.  Will be responsible for streaming audio.
 ---------------------------------------------------------------------------------------*/
 void runUDPServer(ServerWindow *sw, int port) {
-    SOCKADDR_IN addr;
+    SOCKADDR_IN addr, cltDest;
     SOCKET acceptSocket;
+    struct ip_mreq stMreq;
+    u_long ttl = MCAST_TTL;
+    int flag = 0;
 
     // Init address info
     addr = serverCreateAddress(port);
@@ -117,6 +122,18 @@ void runUDPServer(ServerWindow *sw, int port) {
     // bind the socket
     if (!bindSocket(acceptSocket, &addr))
         return;
+
+    stMreq.imr_multiaddr.s_addr = inet_addr(MCAST_ADDR);
+    stMreq.imr_interface.s_addr = INADDR_ANY;
+
+    if (!setOptions(acceptSocket, IP_ADD_MEMBERSHIP, (char *)&stMreq))
+        return;
+    if (!setOptions(acceptSocket, IP_MULTICAST_TTL, (char *)&ttl))
+        return;
+    if (!setOptions(acceptSocket, IP_MULTICAST_LOOP, (char *)&flag))
+        return;
+
+    cltDest = clientCreateAddress(MCAST_ADDR, MCAST_PORT);
 
     while (1) {
         // Do stuff
