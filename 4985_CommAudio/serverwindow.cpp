@@ -111,15 +111,22 @@ DWORD WINAPI ServerWindow::tcpServerThread(void *arg)
 {
     ServerWindow *sw = (ServerWindow *)arg;
 
-    runTCPServer(sw, 5150);
+    runTCPServer(sw, 8980);
 
     return 0;
 }
 
-void ServerWindow::createSongList()
+QStringList ServerWindow::getSongs()
 {
     QDir directory("../Music");
-    QStringList list = directory.entryList();
+    QStringList songs = directory.entryList();
+
+    return songs;
+}
+
+void ServerWindow::createSongList()
+{
+    QStringList list = getSongs();
     for (auto song : list)
     {
         ui->musicList->addItem(song);

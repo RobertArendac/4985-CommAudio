@@ -62,14 +62,13 @@ void ClientWindow::on_cltConnect_clicked()
     ThreadInfo *ti;
 
     ti = (ThreadInfo *)malloc(sizeof(ThreadInfo));
-
-    runTCPClient(this, ui->cltHostIPEditText->text().toStdString().c_str(), ui->cltPortSpinner->value());
-
     strcpy(ti->cltIP, ui->cltHostIPEditText->text().toStdString().c_str());
     ti->cltPort = ui->cltPortSpinner->value();
     ti->window = this;
 
     CreateThread(NULL, 0, ClientWindow::udpClientThread, (void *)ti, 0, NULL);
+
+    runTCPClient(this, ti->cltIP, 8980);
 }
 
 void ClientWindow::on_cltSelectAllButton_clicked()

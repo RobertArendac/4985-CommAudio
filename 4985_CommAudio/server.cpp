@@ -81,12 +81,41 @@ void runTCPServer(ServerWindow *sw, int port)
 
 }
 
-DWORD WINAPI tcpClient(void *arg) {
+DWORD WINAPI tcpClient(void *arg)
+{
     SOCKET *clientSck = (SOCKET *)arg;
+    std::string songlist;
+    DWORD sendBytes;
+    SocketInformation *si;
+    char music[1024];
 
-    // Do stuff
+    QStringList songs = ServerWindow::getSongs();
+    for (auto song : songs)
+    {
+        songlist += song.toStdString() + "\n";
+    }
+
+    strcpy(music, songlist.c_str());
+
+    si = (SocketInformation *)malloc(sizeof(SocketInformation));
+    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
+    memset(si->buffer, 0, sizeof(si->buffer));
+    strcpy(si->buffer, music);
+    si->socket = *clientSck;
+    si->bytesReceived = 0;
+    si->bytesSent = 0;
+    si->dataBuf.buf = si->buffer;
+    si->dataBuf.len = 1024;
+
+    WSASend(si->socket, &(si->dataBuf), 1, &sendBytes, 0, &(si->overlapped), clientRoutine);
 
     return 0;
+}
+
+void CALLBACK clientRoutine(DWORD error, DWORD, LPWSAOVERLAPPED, DWORD) {
+    if (error) {
+        fprintf(stderr, "Error: %d\n", error);
+    }
 }
 
 /*--------------------------------------------------------------------------------------

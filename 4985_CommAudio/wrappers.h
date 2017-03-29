@@ -10,6 +10,15 @@
 #define MCAST_PORT  8910
 #define MCAST_TTL   32
 
+typedef struct SocketInformation {
+    OVERLAPPED overlapped;
+    char buffer[1024];
+    WSABUF dataBuf;
+    SOCKET socket;
+    DWORD bytesSent;
+    DWORD bytesReceived;
+} SocketInformation;
+
 int startWinsock();
 int bindSocket(SOCKET s, SOCKADDR_IN *addr);
 int listenConnection(SOCKET s);

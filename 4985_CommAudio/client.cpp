@@ -48,6 +48,8 @@ SOCKADDR_IN clientCreateAddress(const char *host, int port) {
 void runTCPClient(ClientWindow *cw, const char *ip, int port) {
     SOCKET sck;
     SOCKADDR_IN addr;
+    DWORD recvBytes, flags = 0;
+    SocketInformation *si;
 
     // Create a TCP socket
     if ((sck = createSocket(SOCK_STREAM, IPPROTO_TCP)) == NULL)
@@ -66,7 +68,19 @@ void runTCPClient(ClientWindow *cw, const char *ip, int port) {
         return;
     }
 
-    // Do stuff here
+    si = (SocketInformation *)malloc(sizeof(SocketInformation));
+
+    si->socket = sck;
+    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
+    memset(si->buffer, 0, sizeof(si->buffer));
+    si->bytesReceived = 0;
+    si->bytesSent = 0;
+    si->dataBuf.len = 1024;
+    si->dataBuf.buf = si->buffer;
+    WSARecv(si->socket, &(si->dataBuf), 1, &recvBytes, &flags, &(si->overlapped), songRoutine);
+
+    // TAKE OUT WHEN THERE IS MORE CLIENT CODE
+    Sleep(5000);
 
     printf("closing socket");
     closesocket(sck);
@@ -88,7 +102,8 @@ void runTCPClient(ClientWindow *cw, const char *ip, int port) {
 --  PROGRAMMER:    RobertArendac
 --
 --  NOTES:
---      Will set up a UDP socket for sending audio data.
+--      Will set up a UDP socket for sending audio data.  Also joins a multicast group
+--      in order to send audio to all connected clients.
 ---------------------------------------------------------------------------------------*/
 void runUDPClient(ClientWindow *cw, const char *ip, int port) {
     SOCKET sck;
@@ -108,6 +123,7 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port) {
     memset((char *)&addr, 0, sizeof(SOCKADDR_IN));
     addr = clientCreateAddress(ip, port);
 
+    // Set the reuse addr
     if (!setCltOptions(sck, SO_REUSEADDR, (char *)&flag))
         return;
 
@@ -128,4 +144,21 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port) {
     printf("closing socket");
     closesocket(sck);
     WSACleanup();
+}
+
+void CALLBACK songRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags) {
+    DWORD recvBytes;
+
+    SocketInformation *si = (SocketInformation *)overlapped;
+
+    if (error != 0 || bytesTransferred == 0) {
+        if (error) {
+            fprintf(stderr, "Error: %d\n", error);
+        }
+        fprintf(stderr, "Closing socket: %d\n", si->socket);
+        closesocket(si->socket);
+        return;
+    }
+
+    fprintf(stdout, "\n%s\n", si->dataBuf.buf);
 }

@@ -23,6 +23,7 @@ public:
     static DWORD WINAPI tcpServerThread(void *arg);
     void createSongList();
     void updateClients(const char *client);
+    static QStringList getSongs();
 
 private slots:
     void on_srvStartStopButton_clicked();
