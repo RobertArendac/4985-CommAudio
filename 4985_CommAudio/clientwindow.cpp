@@ -62,7 +62,7 @@ void ClientWindow::on_cltConnect_clicked()
 
     ti = (ThreadInfo *)malloc(sizeof(ThreadInfo));
     strcpy(ti->cltIP, ui->cltHostIPEditText->text().toStdString().c_str());
-    ti->cltPort = ui->cltPortSpinner->value();
+    ti->cltPort = ui->cltTCPPortSpinner->value();
     ti->window = this;
 
     CreateThread(NULL, 0, ClientWindow::udpClientThread, (void *)ti, 0, NULL);

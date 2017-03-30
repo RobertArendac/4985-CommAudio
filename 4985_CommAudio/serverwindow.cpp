@@ -93,11 +93,6 @@ void ServerWindow::on_srvShuffleRadioButton_clicked()
 
 }
 
-void ServerWindow::on_srvPlaySelectedTrackButton_clicked()
-{
-
-}
-
 /*--------------------------------------------------------------------------------------
 --  INTERFACE:     DWORD WINAPI ServerWindow::tcpServerThread(void *arg)
 --                     void *arg: ServerWindow to pass to the TCP server
@@ -209,4 +204,9 @@ void ServerWindow::updateClients(const char *client)
     char newClient[CLIENT_SIZE];
     sprintf(newClient, "%s", client);
     ui->srvClientListWidgest->addItem(newClient);
+}
+
+void ServerWindow::on_srvSelectPlaylistButton_clicked()
+{
+
 }
