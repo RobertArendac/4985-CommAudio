@@ -33,7 +33,7 @@ private slots:
     void on_srvTrackFFButton_clicked();
     void on_srvTrackNextButton_clicked();
     void on_srvShuffleRadioButton_clicked();
-    void on_srvPlaySelectedTrackButton_clicked();
+    void on_srvSelectPlaylistButton_clicked();
 
 private:
     Ui::ServerWindow *ui;

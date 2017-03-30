@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>751</width>
-    <height>527</height>
+    <height>602</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -23,7 +23,7 @@
       <x>20</x>
       <y>20</y>
       <width>211</width>
-      <height>101</height>
+      <height>161</height>
      </rect>
     </property>
     <property name="title">
@@ -33,9 +33,9 @@
      <property name="geometry">
       <rect>
        <x>70</x>
-       <y>40</y>
-       <width>75</width>
-       <height>23</height>
+       <y>120</y>
+       <width>71</width>
+       <height>21</height>
       </rect>
      </property>
      <property name="text">
@@ -45,8 +45,8 @@
     <widget class="QLabel" name="srvServerStatusLabel">
      <property name="geometry">
       <rect>
-       <x>70</x>
-       <y>70</y>
+       <x>20</x>
+       <y>90</y>
        <width>47</width>
        <height>13</height>
       </rect>
@@ -55,12 +55,70 @@
       <string>Status: </string>
      </property>
     </widget>
+    <widget class="QLabel" name="srvTCPPortLabel">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>30</y>
+       <width>47</width>
+       <height>13</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>TCP Port</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="srvUDPPortLabel">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>60</y>
+       <width>47</width>
+       <height>13</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>UDP Port</string>
+     </property>
+    </widget>
+    <widget class="QSpinBox" name="srvTCPPortSpinner">
+     <property name="geometry">
+      <rect>
+       <x>70</x>
+       <y>30</y>
+       <width>111</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="maximum">
+      <number>10000</number>
+     </property>
+     <property name="value">
+      <number>7000</number>
+     </property>
+    </widget>
+    <widget class="QSpinBox" name="srvUDPPortSpinner">
+     <property name="geometry">
+      <rect>
+       <x>70</x>
+       <y>60</y>
+       <width>111</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="maximum">
+      <number>10000</number>
+     </property>
+     <property name="value">
+      <number>7080</number>
+     </property>
+    </widget>
    </widget>
    <widget class="QGroupBox" name="srvClientListGroupBox">
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>130</y>
+      <y>190</y>
       <width>211</width>
       <height>351</height>
      </rect>
@@ -85,7 +143,7 @@
       <x>250</x>
       <y>20</y>
       <width>481</width>
-      <height>461</height>
+      <height>521</height>
      </rect>
     </property>
     <property name="title">
@@ -162,7 +220,7 @@
        <x>30</x>
        <y>170</y>
        <width>421</width>
-       <height>251</height>
+       <height>301</height>
       </rect>
      </property>
     </widget>
@@ -192,17 +250,17 @@
       <string>Shuffle</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="srvPlaySelectedTrackButton">
+    <widget class="QPushButton" name="srvSelectPlaylistButton">
      <property name="geometry">
       <rect>
        <x>30</x>
-       <y>430</y>
-       <width>111</width>
+       <y>480</y>
+       <width>81</width>
        <height>23</height>
       </rect>
      </property>
      <property name="text">
-      <string>Play Selected Track</string>
+      <string>Select Playlist</string>
      </property>
     </widget>
    </widget>
