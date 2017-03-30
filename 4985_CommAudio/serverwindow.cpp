@@ -166,6 +166,8 @@ QStringList ServerWindow::getSongs()
 {
     QDir directory("../Music");
     QStringList songs = directory.entryList();
+    songs.removeOne(".");
+    songs.removeOne("..");
 
     return songs;
 }
