@@ -37,19 +37,22 @@ SOCKADDR_IN clientCreateAddress(const char *host, int port)
 --                     const char *ip: Host to connect to
 --                     int port: Port to bind to
 --
---  RETURNS:
+--  RETURNS:       0 on success
+--                 -1 on socket error
+--                 -2 on invalid IP error
+--                 -3 on connection error
 --
 --  DATE:          March 19, 2017
 --
 --  DESIGNER:      Robert Arendac
 --
---  PROGRAMMER:    RobertArendac
+--  PROGRAMMER:    RobertArendac, Alex Zielinski
 --
 --  NOTES:
 --      Will connect to a TCP server. Once a connection is established, it will receive
 --      a message containing the server song list.
 ---------------------------------------------------------------------------------------*/
-void runTCPClient(ClientWindow *cw, const char *ip, int port)
+int runTCPClient(ClientWindow *cw, const char *ip, int port)
 {
     SOCKET sck;                 //Socket to send/receive on
     SOCKADDR_IN addr;           //Address of server
@@ -62,11 +65,11 @@ void runTCPClient(ClientWindow *cw, const char *ip, int port)
 
     // Create a TCP socket
     if ((sck = createSocket(SOCK_STREAM, IPPROTO_TCP)) == NULL)
-        return;
+        return -1;
 
     // Check for a valid host
     if (!connectHost(ip))
-        return;
+        return -2;
 
     // Initialize address info
     memset((char *)&addr, 0, sizeof(SOCKADDR_IN));
@@ -74,7 +77,7 @@ void runTCPClient(ClientWindow *cw, const char *ip, int port)
 
     // Connect to the server
     if (!connectToServer(sck, &addr))
-        return;
+        return -3;
 
     //Allocate socket information
     si = (SocketInformation *)malloc(sizeof(SocketInformation));
@@ -104,6 +107,8 @@ void runTCPClient(ClientWindow *cw, const char *ip, int port)
     printf("closing socket");
     closesocket(sck);
     WSACleanup();
+
+    return 0;
 }
 
 /*--------------------------------------------------------------------------------------

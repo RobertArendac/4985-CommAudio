@@ -31,6 +31,7 @@ ClientWindow::ClientWindow(QWidget *parent) :
     ui(new Ui::ClientWindow)
 {
     ui->setupUi(this);
+    ui->cltStatusLabel->setText("Status: Not connected");
 
     // Start a winsock session
     if (!startWinsock())
@@ -112,7 +113,11 @@ void ClientWindow::on_cltDownloadSelectedTrackButton_clicked()
 ---------------------------------------------------------------------------------------*/
 DWORD WINAPI ClientWindow::tcpClientThread(void *arg) {
     ThreadInfo *ti = (ThreadInfo *)arg;
-    runTCPClient(ti->window, ti->cltIP, 8980);
+
+    switch(runTCPClient(ti->window, ti->cltIP, 8980))
+    {
+        case 0: printf("hre");
+    }
 
     return 0;
 }
@@ -159,5 +164,29 @@ void ClientWindow::updateSongs(QStringList songs)
     for (auto song : songs)
     {
         ui->songList->addItem(song);
+    }
+}
+
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void keyPressEvent(QKeyEvent* e);
+--                     QKeyEvent* e: the key that was pressed
+--
+--  RETURNS:       void
+--
+--  DATE:          March 29, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      Adds each song in the song list to the GUI.
+---------------------------------------------------------------------------------------*/
+void ClientWindow::keyPressEvent(QKeyEvent* e)
+{
+    if(e->key() == Qt::Key_K)
+    {
+        printf("K was pressed\n");
     }
 }

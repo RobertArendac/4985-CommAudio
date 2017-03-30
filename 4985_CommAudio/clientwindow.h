@@ -6,6 +6,9 @@
 #include <QMainWindow>
 #include <WinSock2.h>
 #include <Windows.h>
+#include <QMainWindow>
+#include <QMessageBox>
+#include <QKeyEvent>
 
 namespace Ui {
 class ClientWindow;
@@ -30,6 +33,7 @@ private slots:
     void on_cltUploadButton_clicked();
     void on_cltPlaySelectedTrackButton_clicked();
     void on_cltDownloadSelectedTrackButton_clicked();
+    void keyPressEvent(QKeyEvent* e);
 
 private:
     Ui::ClientWindow *ui;

@@ -28,7 +28,7 @@ ServerWindow::ServerWindow(QWidget *parent) :
     ui(new Ui::ServerWindow)
 {
     ui->setupUi(this);
-
+    ui->srvStatusLabel->setText("Status: OFF");
     // Start a winsock session
     if (!startWinsock())
         return;
