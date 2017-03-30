@@ -36,13 +36,15 @@ SOCKADDR_IN serverCreateAddress(int port)
 --                     ServerWindow *sw: GUI to update
 --                     int port: port to bind to
 --
---  RETURNS:       Struct containing all addressing information
+--  RETURNS:       void
 --
 --  DATE:          March 19, 2017
 --
+--  MODIFIED:      March 29, 2017 - Made function return an int ~ AZ
+--
 --  DESIGNER:      Robert Arendac
 --
---  PROGRAMMER:    Robert Arendac
+--  PROGRAMMER:    Robert Arendac, Alex Zielinski
 --
 --  NOTES:
 --      Starts up a TCP server.  Each new client will have its own dedicated thread to
@@ -54,25 +56,33 @@ void runTCPServer(ServerWindow *sw, int port)
     SOCKADDR_IN addr, clientAddr;
 
     // Create socket for listening
-    if ((listenSocket = createSocket(SOCK_STREAM, IPPROTO_TCP)) == NULL)
+    if ((listenSocket = createSocket(SOCK_STREAM, IPPROTO_TCP)) == NULL){
+        sw->updateServerStatus("Status: Socket Error");
         return;
+    }
 
     // Initialize address info
     addr = serverCreateAddress(port);
 
     // Bind the listening socket
-    if (!bindSocket(listenSocket, &addr))
+    if (!bindSocket(listenSocket, &addr)){
+        sw->updateServerStatus("Status: Socket Error");
         return;
+    }
 
     // Set socket to listen for connection
-    if (!listenConnection(listenSocket))
+    if (!listenConnection(listenSocket)){
+        sw->updateServerStatus("Status: Socket Error");
         return;
+    }
 
+    sw->updateServerStatus("Status: ON");
     // Accept incoming connections and put each client on thread
     while (1)
     {
-        if (!acceptingSocket(&acceptSocket, listenSocket, (SOCKADDR *)&clientAddr))
+        if (!acceptingSocket(&acceptSocket, listenSocket, (SOCKADDR *)&clientAddr)){
             return;
+        }
 
         sw->updateClients(inet_ntoa(clientAddr.sin_addr));
         clientMap.insert(std::pair<SOCKET, std::string>(acceptSocket, inet_ntoa(clientAddr.sin_addr)));
@@ -80,7 +90,6 @@ void runTCPServer(ServerWindow *sw, int port)
 
         CreateThread(NULL, 0, tcpClient, &acceptSocket, 0, NULL);
     }
-
 }
 
 /*--------------------------------------------------------------------------------------
@@ -171,15 +180,16 @@ void CALLBACK clientRoutine(DWORD error, DWORD, LPWSAOVERLAPPED, DWORD)
 --                     ServerWindow *sw: GUI to update
 --                     int port: port to bind to
 --
---  RETURNS:       Struct containing all addressing information
+--  RETURNS:       void
 --
 --  DATE:          March 19, 2017
 --
 --  MODIFIED:      March 28, 2017 - Added multicasting capabilities
+--                 March 29, 2017 - Made function return an int ~ AZ
 --
 --  DESIGNER:      Robert Arendac
 --
---  PROGRAMMER:    RobertArendac
+--  PROGRAMMER:    RobertArendac, Alex Zielinski
 --
 --  NOTES:
 --      Starts up a UDP server.  Will be responsible for streaming audio.  Also sets up
@@ -197,26 +207,38 @@ void runUDPServer(ServerWindow *sw, int port)
     addr = serverCreateAddress(port);
 
     // Create a socket for incomming data
-    if ((acceptSocket = createSocket(SOCK_DGRAM, IPPROTO_UDP)) == NULL)
+    if ((acceptSocket = createSocket(SOCK_DGRAM, IPPROTO_UDP)) == NULL){
+        sw->updateServerStatus("Status: Socket Error");
         return;
+    }
 
     // bind the socket
-    if (!bindSocket(acceptSocket, &addr))
+    if (!bindSocket(acceptSocket, &addr)){
+        sw->updateServerStatus("Status: Socket Error");
         return;
+    }
 
     // Multicast interface
     stMreq.imr_multiaddr.s_addr = inet_addr(MCAST_ADDR);
     stMreq.imr_interface.s_addr = INADDR_ANY;
 
     // Join multicast group, specify time-to-live, and disable loop
-    if (!setServOptions(acceptSocket, IP_ADD_MEMBERSHIP, (char *)&stMreq))
+    if (!setServOptions(acceptSocket, IP_ADD_MEMBERSHIP, (char *)&stMreq)){
+        sw->updateServerStatus("Status: Socket Error");
         return;
-    if (!setServOptions(acceptSocket, IP_MULTICAST_TTL, (char *)&ttl))
+    }
+    if (!setServOptions(acceptSocket, IP_MULTICAST_TTL, (char *)&ttl)){
+        sw->updateServerStatus("Status: Socket Error");
         return;
-    if (!setServOptions(acceptSocket, IP_MULTICAST_LOOP, (char *)&flag))
+    }
+    if (!setServOptions(acceptSocket, IP_MULTICAST_LOOP, (char *)&flag)){
+        sw->updateServerStatus("Status: Socket Error");
         return;
+    }
 
     cltDest = clientCreateAddress(MCAST_ADDR, MCAST_PORT);
+
+    sw->updateServerStatus("Status: ON");
 
     while (1)
     {

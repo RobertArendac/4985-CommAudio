@@ -46,7 +46,7 @@ ClientWindow::~ClientWindow()
 /*--------------------------------------------------------------------------------------
 --  INTERFACE:     void ClientWindow::on_cltConnect_clicked()
 --
---  RETURNS:
+--  RETURNS:       void
 --
 --  DATE:          March 19, 2017
 --
@@ -104,9 +104,11 @@ void ClientWindow::on_cltDownloadSelectedTrackButton_clicked()
 --
 --  DATE:          March 25, 2017
 --
+--  MODIFIED:      March 29, 2017 - Update status based on return of runTCPClient ~ AZ
+--
 --  DESIGNER:      Robert Arendac
 --
---  PROGRAMMER:    Robert Arendac
+--  PROGRAMMER:    Robert Arendac, Alex Zielinski
 --
 --  NOTES:
 --      Simple thread that starts the TCP client.
@@ -114,10 +116,8 @@ void ClientWindow::on_cltDownloadSelectedTrackButton_clicked()
 DWORD WINAPI ClientWindow::tcpClientThread(void *arg) {
     ThreadInfo *ti = (ThreadInfo *)arg;
 
-    switch(runTCPClient(ti->window, ti->cltIP, 8980))
-    {
-        case 0: printf("hre");
-    }
+    // check for any erors when creating TCP socket
+    runTCPClient(ti->window, ti->cltIP, 8980);
 
     return 0;
 }
@@ -130,15 +130,19 @@ DWORD WINAPI ClientWindow::tcpClientThread(void *arg) {
 --
 --  DATE:          March 25, 2017
 --
+--  MODIFIED:      March 30, 2017 - Update status based on return of runUDPClient ~ AZ
+--
 --  DESIGNER:      Robert Arendac
 --
---  PROGRAMMER:    Robert Arendac
+--  PROGRAMMER:    Robert Arendac, Alex Zielinski
 --
 --  NOTES:
 --      Simple thread that starts the UDP client.
 ---------------------------------------------------------------------------------------*/
 DWORD WINAPI ClientWindow::udpClientThread(void *arg) {
     ThreadInfo *ti = (ThreadInfo *)arg;
+
+    // check for any erors when creating UDP socket
     runUDPClient(ti->window, ti->cltIP, ti->cltPort);
 
     return 0;
@@ -181,21 +185,21 @@ void ClientWindow::updateSongs(QStringList songs)
 --  PROGRAMMER:    Alex Zielinski
 --
 --  NOTES:
---
----------------------------------------------------------------------------------------*/
+--      Event handler for when the letter K is pressed (also held)
+---------------------   ------------------------------------------------------------------*/
 void ClientWindow::keyPressEvent(QKeyEvent* e)
 {
     if(!e->isAutoRepeat())
     {
         if(e->key() == Qt::Key_K)
         {
-            printf("K was pressed\n");
+            printf("K was pressed\n"); // temp for testing
         }
     }
 }
 
 /*--------------------------------------------------------------------------------------
---  INTERFACE:     void keyReleaseEvent(QKeyEvent* e);
+--  INTERFACE:     void clientWindow::keyReleaseEvent(QKeyEvent* e);
 --                     QKeyEvent* e: the key that was released
 --
 --  RETURNS:       void
@@ -207,7 +211,7 @@ void ClientWindow::keyPressEvent(QKeyEvent* e)
 --  PROGRAMMER:    Alex Zielinski
 --
 --  NOTES:
---
+--      Event handler for when the letter K is released
 ---------------------------------------------------------------------------------------*/
 void ClientWindow::keyReleaseEvent(QKeyEvent* e)
 {
@@ -215,7 +219,27 @@ void ClientWindow::keyReleaseEvent(QKeyEvent* e)
     {
         if(e->key() == Qt::Key_K)
         {
-            printf("K was released\n");
+            printf("K was released\n"); // temp for testing
         }
     }
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void clientWindow::updateStatus(int status)
+--                     int status: return value of a function to determine status of client
+--
+--  RETURNS:       void
+--
+--  DATE:          March 29, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      Updates the status label of the client based on string that is passed in
+---------------------------------------------------------------------------------------*/
+void ClientWindow::updateClientStatus(QString status)
+{
+    ui->cltStatusLabel->setText(status);
 }

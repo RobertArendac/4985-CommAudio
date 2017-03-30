@@ -7,7 +7,7 @@
 #include "wrappers.h"
 
 SOCKADDR_IN clientCreateAddress(const char *host, int port);
-int runTCPClient(ClientWindow *cw, const char *ip, int port);
+void runTCPClient(ClientWindow *cw, const char *ip, int port);
 void runUDPClient(ClientWindow *cw, const char *ip, int port);
 void CALLBACK songRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
 
