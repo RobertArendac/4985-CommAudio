@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>826</width>
-    <height>845</height>
+    <height>614</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -141,9 +141,9 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>210</y>
+      <y>200</y>
       <width>301</width>
-      <height>411</height>
+      <height>371</height>
      </rect>
     </property>
     <property name="title">
@@ -155,7 +155,7 @@
        <x>30</x>
        <y>50</y>
        <width>241</width>
-       <height>241</height>
+       <height>271</height>
       </rect>
      </property>
     </widget>
@@ -163,7 +163,7 @@
      <property name="geometry">
       <rect>
        <x>30</x>
-       <y>300</y>
+       <y>330</y>
        <width>75</width>
        <height>23</height>
       </rect>
@@ -189,10 +189,10 @@
    <widget class="QGroupBox" name="cltTrackGroupBox">
     <property name="geometry">
      <rect>
-      <x>270</x>
+      <x>260</x>
       <y>20</y>
-      <width>541</width>
-      <height>141</height>
+      <width>551</width>
+      <height>171</height>
      </rect>
     </property>
     <property name="title">
@@ -202,10 +202,10 @@
    <widget class="QGroupBox" name="cltTrackListGroupBox">
     <property name="geometry">
      <rect>
-      <x>340</x>
-      <y>180</y>
+      <x>330</x>
+      <y>200</y>
       <width>441</width>
-      <height>401</height>
+      <height>371</height>
      </rect>
     </property>
     <property name="title">

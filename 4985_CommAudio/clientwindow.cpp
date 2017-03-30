@@ -104,11 +104,9 @@ void ClientWindow::on_cltDownloadSelectedTrackButton_clicked()
 --
 --  DATE:          March 25, 2017
 --
---  MODIFIED:      March 29, 2017 - Update status based on return of runTCPClient ~ AZ
---
 --  DESIGNER:      Robert Arendac
 --
---  PROGRAMMER:    Robert Arendac, Alex Zielinski
+--  PROGRAMMER:    Robert Arendac
 --
 --  NOTES:
 --      Simple thread that starts the TCP client.
@@ -130,11 +128,9 @@ DWORD WINAPI ClientWindow::tcpClientThread(void *arg) {
 --
 --  DATE:          March 25, 2017
 --
---  MODIFIED:      March 30, 2017 - Update status based on return of runUDPClient ~ AZ
---
 --  DESIGNER:      Robert Arendac
 --
---  PROGRAMMER:    Robert Arendac, Alex Zielinski
+--  PROGRAMMER:    Robert Arendac
 --
 --  NOTES:
 --      Simple thread that starts the UDP client.

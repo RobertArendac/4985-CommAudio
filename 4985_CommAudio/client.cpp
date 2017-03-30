@@ -41,7 +41,7 @@ SOCKADDR_IN clientCreateAddress(const char *host, int port)
 --
 --  DATE:          March 19, 2017
 --
---  MODIFIED:      March 29, 2017 - Update client status accordingly ~ AZ
+--  MODIFIED:      March 30, 2017 - Update client status accordingly ~ AZ
 --
 --  DESIGNER:      Robert Arendac
 --
@@ -128,7 +128,7 @@ void runTCPClient(ClientWindow *cw, const char *ip, int port)
 --
 --  DATE:          March 19, 2017
 --
---  MODIFIED:      March 29, 2017 - Update client status accordingly ~ AZ
+--  MODIFIED:      March 30, 2017 - Update client status accordingly ~ AZ
 --
 --  DESIGNER:      Robert Arendac
 --
