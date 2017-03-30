@@ -30,9 +30,9 @@ ClientWindow::ClientWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::ClientWindow)
 {
+
     ui->setupUi(this);
     ui->cltStatusLabel->setText("Status: Not connected");
-
     // Start a winsock session
     if (!startWinsock())
         return;
@@ -181,12 +181,41 @@ void ClientWindow::updateSongs(QStringList songs)
 --  PROGRAMMER:    Alex Zielinski
 --
 --  NOTES:
---      Adds each song in the song list to the GUI.
+--
 ---------------------------------------------------------------------------------------*/
 void ClientWindow::keyPressEvent(QKeyEvent* e)
 {
-    if(e->key() == Qt::Key_K)
+    if(!e->isAutoRepeat())
     {
-        printf("K was pressed\n");
+        if(e->key() == Qt::Key_K)
+        {
+            printf("K was pressed\n");
+        }
+    }
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void keyReleaseEvent(QKeyEvent* e);
+--                     QKeyEvent* e: the key that was released
+--
+--  RETURNS:       void
+--
+--  DATE:          March 29, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--
+---------------------------------------------------------------------------------------*/
+void ClientWindow::keyReleaseEvent(QKeyEvent* e)
+{
+    if(!e->isAutoRepeat())
+    {
+        if(e->key() == Qt::Key_K)
+        {
+            printf("K was released\n");
+        }
     }
 }

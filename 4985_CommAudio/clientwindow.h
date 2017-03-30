@@ -9,6 +9,7 @@
 #include <QMainWindow>
 #include <QMessageBox>
 #include <QKeyEvent>
+#include <QShortcut>
 
 namespace Ui {
 class ClientWindow;
@@ -34,6 +35,7 @@ private slots:
     void on_cltPlaySelectedTrackButton_clicked();
     void on_cltDownloadSelectedTrackButton_clicked();
     void keyPressEvent(QKeyEvent* e);
+    void keyReleaseEvent(QKeyEvent* e);
 
 private:
     Ui::ClientWindow *ui;
