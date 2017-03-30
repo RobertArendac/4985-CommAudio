@@ -85,7 +85,7 @@ void runTCPClient(ClientWindow *cw, const char *ip, int port)
     memset(si->buffer, 0, sizeof(si->buffer));
     si->bytesReceived = 0;
     si->bytesSent = 0;
-    si->dataBuf.len = 1024;
+    si->dataBuf.len = SONG_SIZE;
     si->dataBuf.buf = si->buffer;
 
     // Receive data, will be the song list

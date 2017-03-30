@@ -3,7 +3,6 @@
 
 #include <WinSock2.h>
 #include <Windows.h>
-#include "serverwindow.h"
 #include "wrappers.h"
 
 void runTCPServer(ServerWindow *sw, int port);
