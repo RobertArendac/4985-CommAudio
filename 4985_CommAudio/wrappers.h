@@ -12,8 +12,11 @@
 #define MCAST_PORT  8910
 #define MCAST_TTL   32  //Kind of an arbitrary setting, I don't know what's best here...
 
+#define SONG_SIZE 1024
+#define IP_SIZE 16
+
 typedef struct {
-    char cltIP[16];
+    char cltIP[IP_SIZE];
     int TCPPort;
     int UDPPort;
     ServerWindow *sWindow;
