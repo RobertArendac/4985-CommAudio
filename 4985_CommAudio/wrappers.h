@@ -5,10 +5,20 @@
 
 #include <WinSock2.h>
 #include <Windows.h>
+#include "serverwindow.h"
+#include "clientwindow.h"
 
 #define MCAST_ADDR  "234.5.6.7"
 #define MCAST_PORT  8910
 #define MCAST_TTL   32  //Kind of an arbitrary setting, I don't know what's best here...
+
+typedef struct {
+    char cltIP[16];
+    int TCPPort;
+    int UDPPort;
+    ServerWindow *sWindow;
+    ClientWindow *cWindow;
+} ThreadInfo;
 
 // Hold all the information associated with a socket
 typedef struct SocketInformation {
