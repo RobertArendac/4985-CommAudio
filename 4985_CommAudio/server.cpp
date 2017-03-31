@@ -56,7 +56,8 @@ void runTCPServer(ServerWindow *sw, int port)
     SOCKADDR_IN addr, clientAddr;
 
     // Create socket for listening
-    if ((listenSocket = createSocket(SOCK_STREAM, IPPROTO_TCP)) == NULL){
+    if ((listenSocket = createSocket(SOCK_STREAM, IPPROTO_TCP)) == NULL)
+    {
         sw->updateServerStatus("Status: Socket Error");
         return;
     }
@@ -65,13 +66,15 @@ void runTCPServer(ServerWindow *sw, int port)
     addr = serverCreateAddress(port);
 
     // Bind the listening socket
-    if (!bindSocket(listenSocket, &addr)){
+    if (!bindSocket(listenSocket, &addr))
+    {
         sw->updateServerStatus("Status: Socket Error");
         return;
     }
 
     // Set socket to listen for connection
-    if (!listenConnection(listenSocket)){
+    if (!listenConnection(listenSocket))
+    {
         sw->updateServerStatus("Status: Socket Error");
         return;
     }
@@ -80,7 +83,8 @@ void runTCPServer(ServerWindow *sw, int port)
     // Accept incoming connections and put each client on thread
     while (1)
     {
-        if (!acceptingSocket(&acceptSocket, listenSocket, (SOCKADDR *)&clientAddr)){
+        if (!acceptingSocket(&acceptSocket, listenSocket, (SOCKADDR *)&clientAddr))
+        {
             return;
         }
 
@@ -207,13 +211,15 @@ void runUDPServer(ServerWindow *sw, int port)
     addr = serverCreateAddress(port);
 
     // Create a socket for incomming data
-    if ((acceptSocket = createSocket(SOCK_DGRAM, IPPROTO_UDP)) == NULL){
+    if ((acceptSocket = createSocket(SOCK_DGRAM, IPPROTO_UDP)) == NULL)
+    {
         sw->updateServerStatus("Status: Socket Error");
         return;
     }
 
     // bind the socket
-    if (!bindSocket(acceptSocket, &addr)){
+    if (!bindSocket(acceptSocket, &addr))
+    {
         sw->updateServerStatus("Status: Socket Error");
         return;
     }
@@ -223,15 +229,20 @@ void runUDPServer(ServerWindow *sw, int port)
     stMreq.imr_interface.s_addr = INADDR_ANY;
 
     // Join multicast group, specify time-to-live, and disable loop
-    if (!setServOptions(acceptSocket, IP_ADD_MEMBERSHIP, (char *)&stMreq)){
+    if (!setServOptions(acceptSocket, IP_ADD_MEMBERSHIP, (char *)&stMreq))
+    {
         sw->updateServerStatus("Status: Socket Error");
         return;
     }
-    if (!setServOptions(acceptSocket, IP_MULTICAST_TTL, (char *)&ttl)){
+
+    if (!setServOptions(acceptSocket, IP_MULTICAST_TTL, (char *)&ttl))
+    {
         sw->updateServerStatus("Status: Socket Error");
         return;
     }
-    if (!setServOptions(acceptSocket, IP_MULTICAST_LOOP, (char *)&flag)){
+
+    if (!setServOptions(acceptSocket, IP_MULTICAST_LOOP, (char *)&flag))
+    {
         sw->updateServerStatus("Status: Socket Error");
         return;
     }

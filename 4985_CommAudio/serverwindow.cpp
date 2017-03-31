@@ -232,8 +232,7 @@ void ServerWindow::on_srvSelectPlaylistButton_clicked()
 --  PROGRAMMER:    Alex Zielinski
 --
 --  NOTES:
---      Updates the status label of the client based on the return value returned by
---      the functions that create the TCP and UDP sockets
+--      Updates the status label of the client based on string that is passed in
 ---------------------------------------------------------------------------------------*/
 void ServerWindow::updateServerStatus(QString status)
 {

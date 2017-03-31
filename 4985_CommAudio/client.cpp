@@ -63,13 +63,15 @@ void runTCPClient(ClientWindow *cw, const char *ip, int port)
     clientWind = cw;    //Init the global ClientWindow
 
     // Create a TCP socket
-    if ((sck = createSocket(SOCK_STREAM, IPPROTO_TCP)) == NULL){
+    if ((sck = createSocket(SOCK_STREAM, IPPROTO_TCP)) == NULL)
+    {
         cw->updateClientStatus("Status: Socket Error");
         return;
     }
 
     // Check for a valid host
-    if (!connectHost(ip)){
+    if (!connectHost(ip))
+    {
         cw->updateClientStatus("Status: Host IP Error");
         return;
     }
@@ -80,7 +82,8 @@ void runTCPClient(ClientWindow *cw, const char *ip, int port)
     addr = clientCreateAddress(ip, port);
 
     // Connect to the server
-    if (!connectToServer(sck, &addr)){
+    if (!connectToServer(sck, &addr))
+    {
         cw->updateClientStatus("Status: Connection Error");
         return;
     }
@@ -146,13 +149,15 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port)
     int flag = 1;               //True flag
 
     // Create a UDP socket
-    if ((sck = createSocket(SOCK_DGRAM, IPPROTO_UDP)) == NULL){
+    if ((sck = createSocket(SOCK_DGRAM, IPPROTO_UDP)) == NULL)
+    {
         cw->updateClientStatus("Status: Socket Error");
         return;
     }
 
     // Check for valid host
-    if (!connectHost(ip)){
+    if (!connectHost(ip))
+    {
         cw->updateClientStatus("Status: Host IP Error");
         return;
     }
@@ -162,7 +167,8 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port)
     addr = clientCreateAddress(ip, port);
 
     // Set the reuse addr
-    if (!setCltOptions(sck, SO_REUSEADDR, (char *)&flag)){
+    if (!setCltOptions(sck, SO_REUSEADDR, (char *)&flag))
+    {
         cw->updateClientStatus("Status: Socket Error");
         return;
     }
@@ -171,7 +177,8 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port)
     srvAddr = serverCreateAddress(MCAST_PORT);
 
     // Bind to multicast group
-    if (!bindSocket(sck, &srvAddr)){
+    if (!bindSocket(sck, &srvAddr))
+    {
         cw->updateClientStatus("Status: Socket Error");
         return;
     }
@@ -181,7 +188,8 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port)
     stMreq.imr_interface.s_addr = INADDR_ANY;
 
     // Join multicast group
-    if (!setServOptions(sck, IP_ADD_MEMBERSHIP, (char *)&stMreq)){
+    if (!setServOptions(sck, IP_ADD_MEMBERSHIP, (char *)&stMreq))
+    {
         cw->updateClientStatus("Status: Socket Error");
         return;
     }
