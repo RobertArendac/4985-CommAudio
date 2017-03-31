@@ -28,7 +28,7 @@ ServerWindow::ServerWindow(QWidget *parent) :
     ui(new Ui::ServerWindow)
 {
     ui->setupUi(this);
-
+    ui->srvStatusLabel->setText("Status: OFF");
     // Start a winsock session
     if (!startWinsock())
         return;
@@ -43,7 +43,6 @@ ServerWindow::~ServerWindow()
 
 /*--------------------------------------------------------------------------------------
 --  INTERFACE:     void ServerWindow::on_srvStartStopButton_clicked()
---
 --
 --  RETURNS:
 --
@@ -218,4 +217,24 @@ void ServerWindow::updateClients(const char *client)
 void ServerWindow::on_srvSelectPlaylistButton_clicked()
 {
 
+}
+
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     ServerWindow::updateServerStatus(int status)
+--
+--  RETURNS:       void
+--
+--  DATE:          March 30, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      Updates the status label of the client based on string that is passed in
+---------------------------------------------------------------------------------------*/
+void ServerWindow::updateServerStatus(QString status)
+{
+    ui->srvStatusLabel->setText(status);
 }
