@@ -114,7 +114,7 @@ DWORD WINAPI tcpClient(void *arg)
     std::string songlist;               //String of all songs
     DWORD sendBytes;                    //Bytes to be sent
     SocketInformation *si;              //Struct holding socket info
-    char music[1024];                   //C-string of songs
+    char music[SONG_SIZE];              //C-string of songs
     WSAEVENT events[1];                 //Array of events (just one)
     DWORD result;                       //Result of waiting for events
 
@@ -137,7 +137,7 @@ DWORD WINAPI tcpClient(void *arg)
     si->bytesReceived = 0;
     si->bytesSent = 0;
     si->dataBuf.buf = si->buffer;
-    si->dataBuf.len = 1024;
+    si->dataBuf.len = SONG_SIZE;
 
     // Send the song list
     WSASend(si->socket, &(si->dataBuf), 1, &sendBytes, 0, &(si->overlapped), clientRoutine);

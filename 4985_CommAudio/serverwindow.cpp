@@ -58,8 +58,15 @@ ServerWindow::~ServerWindow()
 ---------------------------------------------------------------------------------------*/
 void ServerWindow::on_srvStartStopButton_clicked()
 {
-    CreateThread(NULL, 0, ServerWindow::tcpServerThread, this, 0, NULL);
-    CreateThread(NULL, 0, ServerWindow::udpServerThread, this, 0, NULL);
+    ThreadInfo *ti;
+
+    ti = (ThreadInfo *)malloc(sizeof(ThreadInfo));
+    ti->TCPPort = ui->srvTCPPortSpinner->value();
+    ti->UDPPort = ui->srvUDPPortSpinner->value();
+    ti->sWindow = this;
+
+    CreateThread(NULL, 0, ServerWindow::tcpServerThread, (void *)ti, 0, NULL);
+    CreateThread(NULL, 0, ServerWindow::udpServerThread, (void *)ti, 0, NULL);
 }
 
 void ServerWindow::on_srvTrackPreviousButton_clicked()
@@ -109,9 +116,9 @@ void ServerWindow::on_srvShuffleRadioButton_clicked()
 ---------------------------------------------------------------------------------------*/
 DWORD WINAPI ServerWindow::udpServerThread(void *arg)
 {
-    ServerWindow *sw = (ServerWindow *)arg;
+    ThreadInfo *ti = (ThreadInfo *)arg;
 
-    runUDPServer(sw, 7000);
+    runUDPServer(ti->sWindow, ti->UDPPort);
 
     return 0;
 }
@@ -133,9 +140,9 @@ DWORD WINAPI ServerWindow::udpServerThread(void *arg)
 ---------------------------------------------------------------------------------------*/
 DWORD WINAPI ServerWindow::tcpServerThread(void *arg)
 {
-    ServerWindow *sw = (ServerWindow *)arg;
+    ThreadInfo *ti = (ThreadInfo *)arg;
 
-    runTCPServer(sw, 8980);
+    runTCPServer(ti->sWindow, ti->TCPPort);
 
     return 0;
 }
@@ -158,6 +165,8 @@ QStringList ServerWindow::getSongs()
 {
     QDir directory("../Music");
     QStringList songs = directory.entryList();
+    songs.removeOne(".");
+    songs.removeOne("..");
 
     return songs;
 }
