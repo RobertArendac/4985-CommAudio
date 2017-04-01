@@ -4,7 +4,8 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui\
+        multimedia
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -42,6 +43,5 @@ HEADERS  += mainwindow.h \
 FORMS    += mainwindow.ui \
     clientwindow.ui \
     serverwindow.ui
-
 
 win32:LIBS += ws2_32.lib

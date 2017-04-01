@@ -22,6 +22,15 @@
 #include <QDir>
 #include <QDebug>
 #include <QListWidget>
+#include <QDataStream>
+#include <QFile>
+#include <QBuffer>
+#include <QIODevice>
+#include <QAudioOutput>
+#include <QAudioFormat>
+#include <QAudioInput>
+#include <QAudioDeviceInfo>
+#include <QEventLoop>
 
 #define CLIENT_SIZE 32
 
@@ -38,6 +47,47 @@ ServerWindow::ServerWindow(QWidget *parent) :
     createSongList();
 
     pp_counter = 1;
+
+
+    /**
+    QBuffer *buffer;
+    QAudioOutput *a;
+
+    QAudioFormat format;
+    format.setSampleRate(8000);
+    format.setChannelCount(1);
+    format.setSampleSize(8);
+    format.setCodec("audio/pcm");
+    format.setByteOrder(QAudioFormat::LittleEndian);
+    format.setSampleType(QAudioFormat::UnSignedInt);
+
+    QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
+
+    char *data = (char*)malloc(32768 * sizeof(char));
+
+    //generating a sound
+    for (int i = 0; i<256; ++i)
+    {
+       for (int j = 0; j<128; ++j)
+       {
+           data[i * 128 + j] = (char)j;
+       }
+    }
+
+    //copying into the buffer
+    buffer = new QBuffer;
+    buffer->open(QIODevice::ReadWrite);
+    buffer->write(data, 32768);
+    buffer->seek(0);
+
+    a = new QAudioOutput(format);
+    //a->moveToThread(&thr);
+
+    //thr.start();
+    //QMetaObject::invokeMethod(a, "start", Q_ARG(QIODevice*, buffer));
+
+    a->start(buffer);
+    */
 }
 
 ServerWindow::~ServerWindow()
@@ -99,6 +149,22 @@ void ServerWindow::on_srvTrackRWButton_clicked()
 ---------------------------------------------------------------------------------------*/
 void ServerWindow::on_srvTrackPlayPauseButton_clicked()
 {
+    // Read in the whole thing
+    /**
+    char fileType[4];
+    qint32 fileSize;
+    char waveName[4];
+    char fmtName[3];
+    qint32 fmtLength;
+    short fmtType;
+    short numberOfChannels;
+    qint32 sampleRate;
+    qint32 sampleRateXBitsPerSampleXChanngelsDivEight;
+    short bitsPerSampleXChannelsDivEightPointOne;
+    short bitsPerSample;
+    char dataHeader[4];
+    qint32 dataSize;
+
     if(pp_counter == 0)
     {
         ui->srvTrackPlayPauseButton->setText("Play");
@@ -109,7 +175,66 @@ void ServerWindow::on_srvTrackPlayPauseButton_clicked()
         ui->srvTrackPlayPauseButton->setText("Pause");
         pp_counter = 0;
     }
-    /**QStringList list = getSongs();
+
+    QString q = ui->musicList->currentItem()->text();
+    QString filename = "../Music/" + q;
+    qDebug() << filename;
+
+    // Open wave file
+    QFile wavFile(filename);
+    if (!wavFile.open(QFile::ReadOnly))
+    {
+     qDebug() << "Failed to open WAV file...";
+    }
+    else
+    {
+    qDebug() << "WAV file open";
+    }
+
+    // Read in the whole thing
+    QByteArray wavFileContent = wavFile.readAll();
+    qDebug() << "The size of the WAV file is: " << wavFileContent.size();
+
+    // Create a data stream to analyze the data
+    QDataStream analyzeHeaderDS(&wavFileContent,QIODevice::ReadOnly);
+    analyzeHeaderDS.setByteOrder(QDataStream::LittleEndian);
+
+    // Now pop off the appropriate data into each header field defined above
+    analyzeHeaderDS.readRawData(fileType,4); // "RIFF"
+    analyzeHeaderDS >> fileSize; // File Size
+    analyzeHeaderDS.readRawData(waveName,4); // "WAVE"
+    analyzeHeaderDS.readRawData(fmtName,3); // "fmt"
+    analyzeHeaderDS >> fmtLength; // Format length
+    analyzeHeaderDS >> fmtType; // Format type
+    analyzeHeaderDS >> numberOfChannels; // Number of channels
+    analyzeHeaderDS >> sampleRate; // Sample rate
+    analyzeHeaderDS >> sampleRateXBitsPerSampleXChanngelsDivEight; // (Sample Rate * BitsPerSample * Channels) / 8
+    analyzeHeaderDS >> bitsPerSampleXChannelsDivEightPointOne; // (BitsPerSample * Channels) / 8.1
+    analyzeHeaderDS >> bitsPerSample; // Bits per sample
+    analyzeHeaderDS.readRawData(dataHeader,4); // "data" header
+    analyzeHeaderDS >> dataSize; // Data Size
+
+    // Print the header
+    qDebug() << "WAV File Header read:";
+    qDebug() << "File Type: " << QString::fromUtf8(fileType);
+    qDebug() << "File Size: " << fileSize;
+    qDebug() << "WAV Marker: " << QString::fromUtf8(waveName);
+    qDebug() << "Format Name: " << QString::fromUtf8(fmtName);
+    qDebug() << "Format Length: " << fmtLength;
+    qDebug() << "Format Type: " << fmtType;
+    qDebug() << "Number of Channels: " << numberOfChannels;
+    qDebug() << "Sample Rate: " << sampleRate;
+    qDebug() << "Sample Rate * Bits/Sample * Channels / 8: " << sampleRateXBitsPerSampleXChanngelsDivEight;
+    qDebug() << "Bits per Sample * Channels / 8.1: " << bitsPerSampleXChannelsDivEightPointOne;
+    qDebug() << "Bits per Sample: " << bitsPerSample;
+    qDebug() << "Data Header: " << QString::fromUtf8(dataHeader);
+    qDebug() << "Data Size: " << dataSize;
+    */
+    //char *ramBuffer = {};
+
+    //analyzeHeaderDS.readRawData(ramBuffer, (int)dataSize);
+
+/**QStringList list = getSongs();
     QString q = ui->musicList->currentItem()->text();
     qDebug() << q;*/
     /**for (int i = 0; i < list.size(); i++)
@@ -117,6 +242,50 @@ void ServerWindow::on_srvTrackPlayPauseButton_clicked()
         QString tmp = list.at(i);
         qDebug() << tmp;
     }*/
+
+    QFile audio_file("../Music/ChillingMusic.wav");
+    if(audio_file.open(QIODevice::ReadOnly)) {
+        QAudioFormat format;
+        QAudioOutput *output;
+        QBuffer *audioBuffer;
+
+
+        audio_file.seek(44); // skip wav header
+        QByteArray audio_data = audio_file.readAll(); // audio data
+        audio_file.close();
+
+        //QBuffer* audio_buffer = new QBuffer(&audio_data);
+        //audio_buffer->open(QIODevice::ReadWrite);
+        //qDebug() << audio_buffer->size();
+
+        //QAudioFormat format;
+        format.setSampleSize(16);
+        format.setSampleRate(44100);
+        format.setChannelCount(2);
+        format.setCodec("audio/pcm");
+        format.setByteOrder(QAudioFormat::LittleEndian);
+        format.setSampleType(QAudioFormat::UnSignedInt);
+
+        QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
+        if (!info.isFormatSupported(format)) {
+            qWarning()<<"raw audio format not supported by backend, cannot play audio.";
+            return;
+        }
+        qDebug() << info.deviceName();
+
+        audioBuffer = new QBuffer(&audio_data);
+        audioBuffer->open(QIODevice::ReadWrite);
+        audioBuffer->seek(0);
+        //QAudioOutput* output = new QAudioOutput(format);
+        output = new QAudioOutput(format);
+        output->start(audioBuffer);
+        //output->start(&audio_buffer);
+        QEventLoop loop;
+        QObject::connect(output, SIGNAL(stateChanged(QAudio::State)), &loop, SLOT(quit()));
+        do {
+            loop.exec();
+        } while(output->state() == QAudio::ActiveState);
+    }
 }
 
 void ServerWindow::on_srvTrackFFButton_clicked()
