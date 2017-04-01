@@ -38,6 +38,7 @@ private slots:
 
 private:
     Ui::ServerWindow *ui;
+    int pp_counter;
 };
 
 #endif // SERVERWINDOW_H

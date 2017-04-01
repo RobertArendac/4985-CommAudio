@@ -43,6 +43,5 @@ FORMS    += mainwindow.ui \
     clientwindow.ui \
     serverwindow.ui
 
-CONFIG += console
 
 win32:LIBS += ws2_32.lib

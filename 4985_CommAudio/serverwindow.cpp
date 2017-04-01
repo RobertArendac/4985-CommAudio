@@ -20,6 +20,8 @@
 #include "ui_serverwindow.h"
 #include "server.h"
 #include <QDir>
+#include <QDebug>
+#include <QListWidget>
 
 #define CLIENT_SIZE 32
 
@@ -34,6 +36,8 @@ ServerWindow::ServerWindow(QWidget *parent) :
         return;
 
     createSongList();
+
+    pp_counter = 1;
 }
 
 ServerWindow::~ServerWindow()
@@ -79,9 +83,40 @@ void ServerWindow::on_srvTrackRWButton_clicked()
 
 }
 
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void ServerWindow::on_srvTrackPlayPauseButton_clicked()
+--
+--  RETURNS:       void
+--
+--  DATE:          April 1, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--
+---------------------------------------------------------------------------------------*/
 void ServerWindow::on_srvTrackPlayPauseButton_clicked()
 {
-
+    if(pp_counter == 0)
+    {
+        ui->srvTrackPlayPauseButton->setText("Play");
+        pp_counter = 1;
+    }
+    else
+    {
+        ui->srvTrackPlayPauseButton->setText("Pause");
+        pp_counter = 0;
+    }
+    /**QStringList list = getSongs();
+    QString q = ui->musicList->currentItem()->text();
+    qDebug() << q;*/
+    /**for (int i = 0; i < list.size(); i++)
+    {
+        QString tmp = list.at(i);
+        qDebug() << tmp;
+    }*/
 }
 
 void ServerWindow::on_srvTrackFFButton_clicked()
@@ -178,9 +213,11 @@ QStringList ServerWindow::getSongs()
 --
 --  DATE:          March 26, 2017
 --
+--  MODIFIED       April 1 - Set first item of list to be selected by default ~ AZ
+--
 --  DESIGNER:      Robert Arendac
 --
---  PROGRAMMER:    Robert Arendac
+--  PROGRAMMER:    Robert Arendac, Alex Zielinski
 --
 --  NOTES:
 --      Gets the songs in the Music folder and adds them to the GUI
@@ -192,6 +229,8 @@ void ServerWindow::createSongList()
     {
         ui->musicList->addItem(song);
     }
+    // set first item to be currently selected
+    ui->musicList->setCurrentItem(ui->musicList->item(0));
 }
 
 /********************************************************
