@@ -6,6 +6,7 @@
 
 ClientWindow *clientWind;
 SOCKET cltSck;      //Connected TCP socket
+char filename[SONG_SIZE];
 
 /*--------------------------------------------------------------------------------------
 --  INTERFACE:     SOCKADDR_IN serverCreateAddress(const char *host, int port)
@@ -193,8 +194,10 @@ void downloadSong(const char *song)
     memset(si->buffer, 0, sizeof(si->buffer));
     //memset(si->filename, 0, sizeof(si->filename));
 
-    //strcpy(si->filename, QFileDialog::getSaveFileName().toStdString().c_str());
+    // Get the save location
+    strcpy(filename, QFileDialog::getSaveFileName(NULL, "Save Audio File", song, "(*.wav) (*.mp3)").toStdString().c_str());
 
+    // Clear the file
     fp = fopen("../test/test.mp3", "w");
     fclose(fp);
 
@@ -204,6 +207,7 @@ void downloadSong(const char *song)
     si->dataBuf.len = BUF_SIZE;
     si->dataBuf.buf = si->buffer;
 
+    // Sends the song name
     WSASend(si->socket, &(si->dataBuf), 1, &sendBytes, 0, &(si->overlapped), sendRoutine);
 
     // Wait for the send to complete
@@ -213,6 +217,7 @@ void downloadSong(const char *song)
 
     ResetEvent(events[0]);
 
+    // Reset buffers in preparation to receive
     ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
     memset(si->buffer, 0, sizeof(si->buffer));
     strcpy(si->buffer, song);
@@ -221,11 +226,13 @@ void downloadSong(const char *song)
     si->dataBuf.len = BUF_SIZE;
     si->dataBuf.buf = si->buffer;
 
+    // Receives song file
     WSARecv(si->socket, &(si->dataBuf), 1, &recvBytes, &flags, &(si->overlapped), downloadRoutine);
     if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
         fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
 
-    QMessageBox msg(QMessageBox::Information, "Notice:", "Message transfered!");
+    // Notify user download is complete, could probably be refined into something better
+    QMessageBox msg(QMessageBox::Information, "Notice:", "Download complete!");
     msg.exec();
 
 }
@@ -306,7 +313,6 @@ void CALLBACK sendRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED o
     si->dataBuf.len = BUF_SIZE;
     si->dataBuf.buf = si->buffer;
 
-    //WSARecv(si->socket, &(si->dataBuf), 1, &recvBytes, &flags, &(si->overlapped), downloadRoutine);
 }
 
 void CALLBACK downloadRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
@@ -329,13 +335,16 @@ void CALLBACK downloadRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPP
         return;
     }
 
+    // Check for end of transmission
     if (strcmp(si->dataBuf.buf, eot) == 0)
         return;
 
-    fp = fopen("../test/test.mp3", "a+b");
+    //Write chunk to file
+    fp = fopen(filename, "a+b");
     fwrite(si->dataBuf.buf, 1, bytesTransferred, fp);
     fclose(fp);
 
+    // Reset buffers for next receive
     ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
     memset(si->buffer, 0, sizeof(si->buffer));
 
