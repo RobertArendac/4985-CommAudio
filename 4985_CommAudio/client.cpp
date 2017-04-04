@@ -2,6 +2,7 @@
 #include "server.h"
 #include <WS2tcpip.h>
 #include <QMessageBox>
+#include <QFileDialog>
 
 ClientWindow *clientWind;
 SOCKET cltSck;      //Connected TCP socket
@@ -180,6 +181,7 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port)
 
 void downloadSong(const char *song)
 {
+    FILE *fp;
     SocketInformation *si;
     WSAEVENT events[1];
     DWORD result, sendBytes, recvBytes, flags = 0;
@@ -189,6 +191,13 @@ void downloadSong(const char *song)
     si->socket = cltSck;
     ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
     memset(si->buffer, 0, sizeof(si->buffer));
+    //memset(si->filename, 0, sizeof(si->filename));
+
+    //strcpy(si->filename, QFileDialog::getSaveFileName().toStdString().c_str());
+
+    fp = fopen("../test/test.mp3", "w");
+    fclose(fp);
+
     strcpy(si->buffer, song);
     si->bytesReceived = 0;
     si->bytesSent = 0;
@@ -215,6 +224,9 @@ void downloadSong(const char *song)
     WSARecv(si->socket, &(si->dataBuf), 1, &recvBytes, &flags, &(si->overlapped), downloadRoutine);
     if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
         fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
+
+    QMessageBox msg(QMessageBox::Information, "Notice:", "Message transfered!");
+    msg.exec();
 
 }
 
@@ -320,8 +332,8 @@ void CALLBACK downloadRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPP
     if (strcmp(si->dataBuf.buf, eot) == 0)
         return;
 
-    fp = fopen("../test/text.txt", "a+");
-    fprintf(fp, "%s", si->dataBuf.buf);
+    fp = fopen("../test/test.mp3", "a+b");
+    fwrite(si->dataBuf.buf, 1, bytesTransferred, fp);
     fclose(fp);
 
     ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));

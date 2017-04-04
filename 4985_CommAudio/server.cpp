@@ -156,50 +156,15 @@ DWORD WINAPI tcpClient(void *arg)
     ResetEvent(events[0]);
 
     FILE *fp;
-    size_t sz;
-    size_t loops;
-    size_t readv;
-    fp = fopen("../testSend/testing.txt", "r+");
+    int sz;
+    fp = fopen("../Music/Queen - I Want to Break Free.mp3", "r+b");
     fseek(fp, 0, SEEK_END);
     sz = ftell(fp);
     rewind(fp);
+    int loops;
 
-    loops = sz / BUF_SIZE;
-
-    while (!feof(fp))//for (int i = 0; i < loops; i++)
-    {
-        ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
-        memset(si->buffer, 0, sizeof(si->buffer));
-        si->bytesReceived = 0;
-        si->bytesSent = 0;
-
-        readv = fread(si->buffer, 1, BUF_SIZE, fp);
-
-        si->dataBuf.len = BUF_SIZE;
-        si->dataBuf.buf = si->buffer;
-
-        WSASend(si->socket, &(si->dataBuf), 1, &sendBytes, 0, &(si->overlapped), clientRoutine);
-
-        // Wait for the send to complete
-        if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
-            fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
-
-        ResetEvent(events[0]);
-    }
-
-    fclose(fp);
-    /*
-    FILE *fp;
-    size_t sz;
-    size_t loops;
-    size_t readv;
-    fp = fopen("../testSend/testing.txt", "r+");
-    fseek(fp, 0, SEEK_END);
-    sz = ftell(fp);
-    rewind(fp);
-    fclose(fp);
-
-    loops = sz / BUF_SIZE;
+    loops = sz / BUF_SIZE + (sz % BUF_SIZE != 0);
+    int lastSend = sz - ((loops - 1) * BUF_SIZE);
 
     for (int i = 0; i < loops; i++)
     {
@@ -208,14 +173,19 @@ DWORD WINAPI tcpClient(void *arg)
         si->bytesReceived = 0;
         si->bytesSent = 0;
 
-        strcpy(si->buffer, "Testing\n");
+        if (i == loops - 1)
+        {
+            fread(si->buffer, 1, lastSend, fp);
+            si->dataBuf.len = lastSend;
+            si->dataBuf.buf = si->buffer;
+        }
+        else
+        {
+            fread(si->buffer, 1, BUF_SIZE, fp);
 
-//        readv = fread(si->buffer, 1, BUF_SIZE - 1, fp);
-//        si->buffer[BUF_SIZE - 1] = '\0';
-
-        si->dataBuf.buf = si->buffer;
-        si->dataBuf.len = BUF_SIZE;
-
+            si->dataBuf.len = BUF_SIZE;
+            si->dataBuf.buf = si->buffer;
+        }
 
         WSASend(si->socket, &(si->dataBuf), 1, &sendBytes, 0, &(si->overlapped), clientRoutine);
 
@@ -226,7 +196,7 @@ DWORD WINAPI tcpClient(void *arg)
         ResetEvent(events[0]);
     }
 
-    //fclose(fp);
+    fclose(fp);
 
     ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
     memset(si->buffer, 0, sizeof(si->buffer));
@@ -242,7 +212,7 @@ DWORD WINAPI tcpClient(void *arg)
         fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
 
     ResetEvent(events[0]);
-*/
+
     return 0;
 }
 

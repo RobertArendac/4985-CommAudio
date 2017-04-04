@@ -28,6 +28,7 @@ typedef struct {
 typedef struct SocketInformation {
     OVERLAPPED overlapped;
     char buffer[BUF_SIZE];
+    //char filename[BUF_SIZE];
     WSABUF dataBuf;
     SOCKET socket;
     DWORD bytesSent;
