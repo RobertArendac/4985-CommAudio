@@ -87,7 +87,7 @@ void ClientWindow::on_cltPlaySelectedTrackButton_clicked()
 
 void ClientWindow::on_cltDownloadSelectedTrackButton_clicked()
 {
-
+    downloadSong("blah");
 }
 
 /*--------------------------------------------------------------------------------------

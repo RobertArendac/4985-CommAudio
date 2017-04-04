@@ -13,6 +13,7 @@
 #define MCAST_TTL   32  //Kind of an arbitrary setting, I don't know what's best here...
 
 #define SONG_SIZE 1024
+#define BUF_SIZE 2048
 #define IP_SIZE 16
 
 typedef struct {
@@ -26,7 +27,7 @@ typedef struct {
 // Hold all the information associated with a socket
 typedef struct SocketInformation {
     OVERLAPPED overlapped;
-    char buffer[1024];
+    char buffer[BUF_SIZE];
     WSABUF dataBuf;
     SOCKET socket;
     DWORD bytesSent;
