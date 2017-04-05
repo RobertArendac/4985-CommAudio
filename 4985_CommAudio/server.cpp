@@ -6,9 +6,24 @@
 QAudioFormat format;
 QAudioOutput *output;
 QBuffer *audioBuffer;
+QString audioFilePath;
 
 std::map<SOCKET, std::string> clientMap;
 
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void initAudioOutput()
+--
+--  RETURNS:       void
+--
+--  DATE:          April 4, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      initializes audio format and audio output
+---------------------------------------------------------------------------------------*/
 void initAudioOutput()
 {
     // set audio playback formatting
@@ -19,51 +34,158 @@ void initAudioOutput()
     format.setByteOrder(QAudioFormat::LittleEndian);
     format.setSampleType(QAudioFormat::UnSignedInt);
 
+    // setup default output device
+    QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
+    if (!info.isFormatSupported(format)) {
+        qWarning()<<"raw audio format not supported by backend, cannot play audio.";
+        return;
+    }
+
     // initialize output
     output = new QAudioOutput(format);
 }
 
-void playAudio(QFile &audioFile)
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void stopAudio()
+--
+--  RETURNS:       void
+--
+--  DATE:          April 4, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      Stops audio from playing
+---------------------------------------------------------------------------------------*/
+void stopAudio()
 {
-    // open audio file
-    if (audioFile.open(QIODevice::ReadOnly))
+    // check if audio is playing
+    if (output->state() == QAudio::ActiveState)
     {
-        // check if audio is playing
+        output->stop(); // stop the audio
+        output->reset();
+        audioBuffer->close();
+    }
+}
 
-        if (output->state() == QAudio::ActiveState)
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void pauseAudio()
+--
+--  RETURNS:       void
+--
+--  DATE:          April 4, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      Suspend audio
+---------------------------------------------------------------------------------------*/
+void pauseAudio()
+{
+    // check if audio is playing
+    if (output->state() == QAudio::ActiveState)
+    {
+        output->suspend(); // pause the audio
+    }
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void playAudio(QString &filePath)
+--                      QString &filePath: the filepath of audio file
+--
+--  RETURNS:       void
+--
+--  DATE:          April 4, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      initializes audio format and audio output
+---------------------------------------------------------------------------------------*/
+void playAudio(QString &filePath)
+{
+    // check if audio was paused
+    if(output->state() == QAudio::SuspendedState)
+    {
+        output->resume();
+        //qDebug() << audioBuffer->size();
+    }
+    else
+    {
+        // create file handle for audio file
+        QFile audioFile(filePath);
+
+        // open audio file
+        if (audioFile.open(QIODevice::ReadOnly))
         {
-            output->stop(); // stop the audio
-            audioBuffer->close();
-        }
-        else
-        {
-            // seek to raw audio data of wav file
-            audioFile.seek(44);
+            // check if audio is playing
+            if (output->state() == QAudio::ActiveState)
+            {   // check if user selected the same track
+                if (audioFilePath == filePath)
+                {
+                    //output->stop(); // stop the audio
+                    //audioBuffer->close();
+                    return;
+                }
+                else // play different track
+                {
+                    audioFilePath = filePath;
 
-            // extract raw audio data
-            QByteArray audio = audioFile.readAll();
-            audioFile.close();
+                    // seek to raw audio data of wav file
+                    audioFile.seek(44);
 
-            // setup default output device
-            QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
-            if (!info.isFormatSupported(format)) {
-                qWarning()<<"raw audio format not supported by backend, cannot play audio.";
-                return;
+                    // extract raw audio data
+                    QByteArray audio = audioFile.readAll();
+
+                    // initialize audio buffer
+                    audioBuffer = new QBuffer(&audio);
+                    audioBuffer->open(QIODevice::ReadWrite);
+                    audioBuffer->seek(0);
+                    //qDebug() << audioBuffer->size();
+
+                    output->start(audioBuffer); // play track
+
+                    // event loop for tracck
+                    QEventLoop loop;
+                    QObject::connect(output, SIGNAL(stateChanged(QAudio::State)), &loop, SLOT(quit()));
+                    do
+                    {
+                        loop.exec();
+                    } while(output->state() == QAudio::ActiveState);
+                }
             }
+            else
+            {
+                audioFilePath = filePath;
 
-            // initialize audio buffer
-            audioBuffer = new QBuffer(&audio);
-            audioBuffer->open(QIODevice::ReadWrite);
-            audioBuffer->seek(0);
+                // seek to raw audio data of wav file
+                audioFile.seek(44);
 
-            output->start(audioBuffer); // play track
+                // extract raw audio data
+                QByteArray audio = audioFile.readAll();
 
-            // event loop for tracck
-            QEventLoop loop;
-            QObject::connect(output, SIGNAL(stateChanged(QAudio::State)), &loop, SLOT(quit()));
-            do {
-                loop.exec();
-            } while(output->state() == QAudio::ActiveState);
+                // initialize audio buffer
+                audioBuffer = new QBuffer(&audio);
+                audioBuffer->open(QIODevice::ReadWrite);
+                audioBuffer->seek(0);
+                //qDebug() << audioBuffer->size();
+
+                output->start(audioBuffer); // play track
+
+                // event loop for tracck
+                QEventLoop loop;
+                QObject::connect(output, SIGNAL(stateChanged(QAudio::State)), &loop, SLOT(quit()));
+                do
+                {
+                    loop.exec();
+                } while(output->state() == QAudio::ActiveState);
+            }
         }
     }
 }

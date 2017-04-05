@@ -47,7 +47,7 @@ ServerWindow::~ServerWindow()
 /*--------------------------------------------------------------------------------------
 --  INTERFACE:     void ServerWindow::on_srvStartStopButton_clicked()
 --
---  RETURNS:
+--  RETURNS:       void
 --
 --  DATE:          March 19, 2017
 --
@@ -94,58 +94,72 @@ void ServerWindow::on_srvTrackRWButton_clicked()
 --  PROGRAMMER:    Alex Zielinski
 --
 --  NOTES:
---
+--      Onclick method for play button. Plays selected song
 ---------------------------------------------------------------------------------------*/
-void ServerWindow::on_srvTrackPlayPauseButton_clicked()
+void ServerWindow::on_srvTrackPlayButton_clicked()
 {
     // get track name that is currently selected from widget list
-    QString audioFileName = "../Music/" + ui->musicList->currentItem()->text();
-    qDebug() << audioFileName;
-    /**for (int i = 0; i < list.size(); i++)
-    {
-        QString tmp = list.at(i);
-        qDebug() << tmp;
-    }*/
+    QString audioFilePath = "../Music/" + ui->musicList->currentItem()->text();
+    playAudio(audioFilePath);
+}
 
-    // create a file handle for the audio file
-    QFile audioFile(audioFileName);
-    playAudio(audioFile);
-    /**
-    if(audio_file.open(QIODevice::ReadOnly)) {
-        QAudioFormat format;
-        QAudioOutput *output;
-        QBuffer *audioBuffer;
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     ServerWindow::updateServerStatus(int status)
+--
+--  RETURNS:       void
+--
+--  DATE:          March 30, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      Updates the status label of the client based on string that is passed in
+---------------------------------------------------------------------------------------*/
+void ServerWindow::updateServerStatus(QString status)
+{
+    ui->srvStatusLabel->setText(status);
+}
 
-        audio_file.seek(44); // skip wav header
-        QByteArray audio_data = audio_file.readAll(); // audio data
-        audio_file.close();
 
-        format.setSampleSize(16);
-        format.setSampleRate(44100);
-        format.setChannelCount(2);
-        format.setCodec("audio/pcm");
-        format.setByteOrder(QAudioFormat::LittleEndian);
-        format.setSampleType(QAudioFormat::UnSignedInt);
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void ServerWindow::on_srvTrackStopButton_clicked()
+--
+--  RETURNS:       void
+--
+--  DATE:          April 4, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      Stops playing audio if audio is playing
+---------------------------------------------------------------------------------------*/
+void ServerWindow::on_srvTrackStopButton_clicked()
+{
+    stopAudio();
+}
 
-        QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
-        if (!info.isFormatSupported(format)) {
-            qWarning()<<"raw audio format not supported by backend, cannot play audio.";
-            return;
-        }
-       // qDebug() << info.deviceName();
 
-        audioBuffer = new QBuffer(&audio_data);
-        audioBuffer->open(QIODevice::ReadWrite);
-        audioBuffer->seek(0);
-        output = new QAudioOutput(format);
-        output->start(audioBuffer);
-        QEventLoop loop;
-        QObject::connect(output, SIGNAL(stateChanged(QAudio::State)), &loop, SLOT(quit()));
-        do {
-            loop.exec();
-        } while(output->state() == QAudio::ActiveState);
-    }
-    */
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void ServerWindow::on_srvTrackPauseButton_clicked()
+--
+--  RETURNS:       void
+--
+--  DATE:          April 4, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      Pause audio if audio is playing
+---------------------------------------------------------------------------------------*/
+void ServerWindow::on_srvTrackPauseButton_clicked()
+{
+
 }
 
 void ServerWindow::on_srvTrackFFButton_clicked()
@@ -285,24 +299,4 @@ void ServerWindow::updateClients(const char *client)
 void ServerWindow::on_srvSelectPlaylistButton_clicked()
 {
 
-}
-
-
-/*--------------------------------------------------------------------------------------
---  INTERFACE:     ServerWindow::updateServerStatus(int status)
---
---  RETURNS:       void
---
---  DATE:          March 30, 2017
---
---  DESIGNER:      Alex Zielinski
---
---  PROGRAMMER:    Alex Zielinski
---
---  NOTES:
---      Updates the status label of the client based on string that is passed in
----------------------------------------------------------------------------------------*/
-void ServerWindow::updateServerStatus(QString status)
-{
-    ui->srvStatusLabel->setText(status);
 }

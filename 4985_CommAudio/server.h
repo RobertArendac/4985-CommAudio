@@ -13,8 +13,10 @@
 #include <QEventLoop>
 #include "wrappers.h"
 
-void playAudio(QFile &audioFile);
+void playAudio(QString &filePath);
 void initAudioOutput();
+void pauseAudio();
+void stopAudio();
 void runTCPServer(ServerWindow *sw, int port);
 void runUDPServer(ServerWindow *sw, int port);
 SOCKADDR_IN serverCreateAddress(int port);
