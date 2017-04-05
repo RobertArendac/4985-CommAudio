@@ -13,6 +13,11 @@
 #include <QEventLoop>
 #include "wrappers.h"
 
+#define CHANNELCOUNT 2
+#define SAMPLERATE 44100
+#define SAMPLESIZE 16
+#define AUDIODATA 44
+
 void playAudio(QString &filePath);
 void initAudioOutput();
 void pauseAudio();

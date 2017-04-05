@@ -27,16 +27,17 @@ std::map<SOCKET, std::string> clientMap;
 void initAudioOutput()
 {
     // set audio playback formatting
-    format.setSampleSize(16);
-    format.setSampleRate(44100);
-    format.setChannelCount(2);
+    format.setSampleSize(SAMPLESIZE);
+    format.setSampleRate(SAMPLERATE);
+    format.setChannelCount(CHANNELCOUNT);
     format.setCodec("audio/pcm");
     format.setByteOrder(QAudioFormat::LittleEndian);
     format.setSampleType(QAudioFormat::UnSignedInt);
 
     // setup default output device
     QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
-    if (!info.isFormatSupported(format)) {
+    if (!info.isFormatSupported(format))
+    {
         qWarning()<<"raw audio format not supported by backend, cannot play audio.";
         return;
     }
@@ -116,56 +117,20 @@ void playAudio(QString &filePath)
         output->resume();
         //qDebug() << audioBuffer->size();
     }
-    else
+    else // audio not paused
     {
         // create file handle for audio file
         QFile audioFile(filePath);
 
         // open audio file
         if (audioFile.open(QIODevice::ReadOnly))
-        {
-            // check if audio is playing
-            if (output->state() == QAudio::ActiveState)
-            {   // check if user selected the same track
-                if (audioFilePath == filePath)
-                {
-                    //output->stop(); // stop the audio
-                    //audioBuffer->close();
-                    return;
-                }
-                else // play different track
-                {
-                    audioFilePath = filePath;
-
-                    // seek to raw audio data of wav file
-                    audioFile.seek(44);
-
-                    // extract raw audio data
-                    QByteArray audio = audioFile.readAll();
-
-                    // initialize audio buffer
-                    audioBuffer = new QBuffer(&audio);
-                    audioBuffer->open(QIODevice::ReadWrite);
-                    audioBuffer->seek(0);
-                    //qDebug() << audioBuffer->size();
-
-                    output->start(audioBuffer); // play track
-
-                    // event loop for tracck
-                    QEventLoop loop;
-                    QObject::connect(output, SIGNAL(stateChanged(QAudio::State)), &loop, SLOT(quit()));
-                    do
-                    {
-                        loop.exec();
-                    } while(output->state() == QAudio::ActiveState);
-                }
-            }
-            else
+        {   // check if user selected a different track
+            if (audioFilePath != filePath)
             {
                 audioFilePath = filePath;
 
                 // seek to raw audio data of wav file
-                audioFile.seek(44);
+                audioFile.seek(AUDIODATA);
 
                 // extract raw audio data
                 QByteArray audio = audioFile.readAll();
