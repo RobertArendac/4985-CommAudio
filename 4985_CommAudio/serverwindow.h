@@ -6,6 +6,7 @@
 #include <QMainWindow>
 #include <WinSock2.h>
 #include <Windows.h>
+#include <QDebug>
 
 namespace Ui {
 class ServerWindow;

@@ -3,7 +3,70 @@
 #include <map>
 #include <WS2tcpip.h>
 
+QAudioFormat format;
+QAudioOutput *output;
+QBuffer *audioBuffer;
+
 std::map<SOCKET, std::string> clientMap;
+
+void initAudioOutput()
+{
+    // set audio playback formatting
+    format.setSampleSize(16);
+    format.setSampleRate(44100);
+    format.setChannelCount(2);
+    format.setCodec("audio/pcm");
+    format.setByteOrder(QAudioFormat::LittleEndian);
+    format.setSampleType(QAudioFormat::UnSignedInt);
+
+    // initialize output
+    output = new QAudioOutput(format);
+}
+
+void playAudio(QFile &audioFile)
+{
+    // open audio file
+    if (audioFile.open(QIODevice::ReadOnly))
+    {
+        // check if audio is playing
+
+        if (output->state() == QAudio::ActiveState)
+        {
+            output->stop(); // stop the audio
+            audioBuffer->close();
+        }
+        else
+        {
+            // seek to raw audio data of wav file
+            audioFile.seek(44);
+
+            // extract raw audio data
+            QByteArray audio = audioFile.readAll();
+            audioFile.close();
+
+            // setup default output device
+            QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
+            if (!info.isFormatSupported(format)) {
+                qWarning()<<"raw audio format not supported by backend, cannot play audio.";
+                return;
+            }
+
+            // initialize audio buffer
+            audioBuffer = new QBuffer(&audio);
+            audioBuffer->open(QIODevice::ReadWrite);
+            audioBuffer->seek(0);
+
+            output->start(audioBuffer); // play track
+
+            // event loop for tracck
+            QEventLoop loop;
+            QObject::connect(output, SIGNAL(stateChanged(QAudio::State)), &loop, SLOT(quit()));
+            do {
+                loop.exec();
+            } while(output->state() == QAudio::ActiveState);
+        }
+    }
+}
 
 /*--------------------------------------------------------------------------------------
 --  INTERFACE:     SOCKADDR_IN serverCreateAddress(int port)
