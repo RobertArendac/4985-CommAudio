@@ -140,6 +140,7 @@ void ServerWindow::updateServerStatus(QString status)
 void ServerWindow::on_srvTrackStopButton_clicked()
 {
     stopAudio();
+    resetPrevSong();
 }
 
 

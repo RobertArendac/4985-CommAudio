@@ -3,12 +3,30 @@
 #include <map>
 #include <WS2tcpip.h>
 
-QAudioFormat format;
 QAudioOutput *output;
 QBuffer *audioBuffer;
 QString audioFilePath;
 
 std::map<SOCKET, std::string> clientMap;
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void resetPrevSong()
+--
+--  RETURNS:       void
+--
+--  DATE:          April 6, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      Resets the string of the previous song to be empty
+---------------------------------------------------------------------------------------*/
+void resetPrevSong()
+{
+    audioFilePath = "";
+}
 
 /*--------------------------------------------------------------------------------------
 --  INTERFACE:     void initAudioOutput()
@@ -26,6 +44,8 @@ std::map<SOCKET, std::string> clientMap;
 ---------------------------------------------------------------------------------------*/
 void initAudioOutput()
 {
+    QAudioFormat format;
+
     // set audio playback formatting
     format.setSampleSize(SAMPLESIZE);
     format.setSampleRate(SAMPLERATE);
