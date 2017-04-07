@@ -26,6 +26,8 @@ public:
     void updateClients(const char *client);
     static QStringList getSongs();
     void updateServerStatus(QString status);
+    void playNextTrack();
+    void playPrevTrack();
 
 private slots:
     void on_srvStartStopButton_clicked();

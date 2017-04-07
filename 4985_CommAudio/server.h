@@ -18,6 +18,7 @@
 #define SAMPLESIZE 16
 #define AUDIODATA 44
 
+bool audioPlaying();
 void resetPrevSong();
 void playAudio(QString &filePath);
 void initAudioOutput();

@@ -10,6 +10,25 @@ QString audioFilePath;
 std::map<SOCKET, std::string> clientMap;
 
 /*--------------------------------------------------------------------------------------
+--  INTERFACE:     bool isSongPlaying()
+--
+--  RETURNS:       returns true if audio is playing. Otherwise false;
+--
+--  DATE:          April 6, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      checks if audio is currently playing and returns appropriate bool value
+---------------------------------------------------------------------------------------*/
+bool audioPlaying()
+{
+    return (output->state() == QAudio::ActiveState);
+}
+
+/*--------------------------------------------------------------------------------------
 --  INTERFACE:     void resetPrevSong()
 --
 --  RETURNS:       void
