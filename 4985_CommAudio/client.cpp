@@ -297,7 +297,7 @@ void updateClientSongs() {
     si->socket = cltSck;
     ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
     memset(si->buffer, 0, sizeof(si->buffer));
-    strcpy(si->buffer,"updoot");
+    strcpy(si->buffer,"update");
     si->bytesReceived = 0;
     si->bytesSent = 0;
     si->dataBuf.len = BUF_SIZE;
@@ -322,7 +322,7 @@ void updateClientSongs() {
 
     WSARecv(si->socket, &(si->dataBuf), 1, &recvBytes, &flags, &(si->overlapped), songRoutine);
     if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
-    fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
+        fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
 }
 
 /*--------------------------------------------------------------------------------------

@@ -111,8 +111,9 @@ void ClientWindow::on_cltUploadButton_clicked()
 ---------------------------------------------------------------------------------------*/
 void ClientWindow::on_cltPlaySelectedTrackButton_clicked()
 {
-    if (ui->songList->currentItem() != NULL ) {
-    const QString& song = ui->songList->currentItem()->text();
+    if (ui->songList->currentItem() != NULL )
+    {
+        const QString& song = ui->songList->currentItem()->text();
         requestSong(song.toStdString().c_str());
     }
 

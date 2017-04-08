@@ -310,7 +310,8 @@ DWORD WINAPI tcpClient(void *arg)
 
     //Client request Parse loop
     events[0] = WSACreateEvent();
-    while (true) {
+    while (true)
+    {
         ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
         memset(si->buffer, 0, sizeof(si->buffer));
         si->bytesReceived = 0;
@@ -509,20 +510,24 @@ void CALLBACK parseRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
         closesocket(si->socket);
         return;
     }
-    if (strcmp("pick",si->buffer) == 0) {
-        selectSong(overlapped);
-    } else if (strcmp("dl",si->buffer) == 0) {
+    if (strcmp("pick",si->buffer) == 0)
+    {
+        selectSong(si);
+    } else if (strcmp("dl",si->buffer) == 0)
+    {
 
-    } else if (strcmp("ul",si->buffer) == 0) {
+    } else if (strcmp("ul",si->buffer) == 0)
+    {
 
-    } else if (strcmp("updoot",si->buffer) == 0) {
+    } else if (strcmp("update",si->buffer) == 0)
+    {
        sendSongs(si);
     }
 }
 
 /*--------------------------------------------------------------------------------------
---  INTERFACE:     void selectSong(LPWSAOVERLAPPED overlapped)
---                     LPWSAOVERLAPPED overlapped: pointer to overlapped struct
+--  INTERFACE:     void selectSong(SocketInformation *si)
+--                     SocketInformation *si: Pointer to a valid Socket Info Struct
 --
 --  RETURNS:       void
 --
@@ -535,10 +540,10 @@ void CALLBACK parseRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 --  NOTES:
 --      Method that plays a specific song for the user, in response to a request.
 ---------------------------------------------------------------------------------------*/
-void selectSong(LPWSAOVERLAPPED overlapped) {
+void selectSong(SocketInformation *si)
+{
     DWORD result, recvBytes, flags = 0;
     WSAEVENT events[1];
-    SocketInformation *si = (SocketInformation *)overlapped;
     ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
     memset(si->buffer, 0, sizeof(si->buffer));
     si->bytesReceived = 0;
@@ -556,7 +561,6 @@ void selectSong(LPWSAOVERLAPPED overlapped) {
 
     //temporary until I know how song selection works. replace this with playing the song.
     fprintf(stdout,"Song name: %s\n",si->buffer);
-
 }
 
 
