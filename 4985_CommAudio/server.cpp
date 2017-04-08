@@ -5,7 +5,7 @@
 
 QAudioOutput *output;
 QBuffer *audioBuffer;
-QString audioFilePath;
+QString prevTrack;
 
 std::map<SOCKET, std::string> clientMap;
 
@@ -44,7 +44,7 @@ bool audioPlaying()
 ---------------------------------------------------------------------------------------*/
 void resetPrevSong()
 {
-    audioFilePath = "";
+    prevTrack = "";
 }
 
 /*--------------------------------------------------------------------------------------
@@ -150,46 +150,38 @@ void pauseAudio()
 ---------------------------------------------------------------------------------------*/
 void playAudio(QString &filePath)
 {
-    // check if audio was paused
-    if(output->state() == QAudio::SuspendedState)
-    {
-        output->resume();
-        //qDebug() << audioBuffer->size();
-    }
-    else // audio not paused
-    {
-        // create file handle for audio file
-        QFile audioFile(filePath);
+    qDebug() << prevTrack;
 
-        // open audio file
-        if (audioFile.open(QIODevice::ReadOnly))
-        {   // check if user selected a different track
-            if (audioFilePath != filePath)
+    // create file handle for audio file
+    QFile audioFile(filePath);
+
+    // open audio file
+    if (audioFile.open(QIODevice::ReadOnly))
+    {   // check if user selected a different track
+        if (prevTrack != filePath || output->state() == QAudio::IdleState && prevTrack == filePath)
+        {
+            prevTrack = filePath;
+            // seek to raw audio data of wav file
+            audioFile.seek(AUDIODATA);
+
+            // extract raw audio data
+            QByteArray audio = audioFile.readAll();
+
+            // initialize audio buffer
+            audioBuffer = new QBuffer(&audio);
+            audioBuffer->open(QIODevice::ReadWrite);
+            audioBuffer->seek(0);
+            //qDebug() << audioBuffer->size();
+
+            output->start(audioBuffer); // play track
+
+            // event loop for tracck
+            QEventLoop loop;
+            QObject::connect(output, SIGNAL(stateChanged(QAudio::State)), &loop, SLOT(quit()));
+            do
             {
-                audioFilePath = filePath;
-
-                // seek to raw audio data of wav file
-                audioFile.seek(AUDIODATA);
-
-                // extract raw audio data
-                QByteArray audio = audioFile.readAll();
-
-                // initialize audio buffer
-                audioBuffer = new QBuffer(&audio);
-                audioBuffer->open(QIODevice::ReadWrite);
-                audioBuffer->seek(0);
-                //qDebug() << audioBuffer->size();
-
-                output->start(audioBuffer); // play track
-
-                // event loop for tracck
-                QEventLoop loop;
-                QObject::connect(output, SIGNAL(stateChanged(QAudio::State)), &loop, SLOT(quit()));
-                do
-                {
-                    loop.exec();
-                } while(output->state() == QAudio::ActiveState);
-            }
+                loop.exec();
+            } while(output->state() == QAudio::ActiveState);
         }
     }
 }
