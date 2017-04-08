@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>751</width>
-    <height>602</height>
+    <height>588</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -42,13 +42,13 @@
       <string>Start</string>
      </property>
     </widget>
-    <widget class="QLabel" name="srvServerStatusLabel">
+    <widget class="QLabel" name="srvStatusLabel">
      <property name="geometry">
       <rect>
        <x>20</x>
        <y>90</y>
-       <width>47</width>
-       <height>13</height>
+       <width>161</width>
+       <height>16</height>
       </rect>
      </property>
      <property name="text">
@@ -140,7 +140,7 @@
    <widget class="QGroupBox" name="groupBox">
     <property name="geometry">
      <rect>
-      <x>250</x>
+      <x>240</x>
       <y>20</y>
       <width>481</width>
       <height>521</height>
@@ -149,12 +149,12 @@
     <property name="title">
      <string>Track</string>
     </property>
-    <widget class="QPushButton" name="srvTrackPlayPauseButton">
+    <widget class="QPushButton" name="srvTrackPlayButton">
      <property name="geometry">
       <rect>
-       <x>200</x>
-       <y>80</y>
-       <width>71</width>
+       <x>220</x>
+       <y>90</y>
+       <width>41</width>
        <height>23</height>
       </rect>
      </property>
@@ -165,8 +165,8 @@
     <widget class="QPushButton" name="srvTrackFFButton">
      <property name="geometry">
       <rect>
-       <x>280</x>
-       <y>80</y>
+       <x>320</x>
+       <y>90</y>
        <width>21</width>
        <height>23</height>
       </rect>
@@ -178,8 +178,8 @@
     <widget class="QPushButton" name="srvTrackNextButton">
      <property name="geometry">
       <rect>
-       <x>310</x>
-       <y>80</y>
+       <x>350</x>
+       <y>90</y>
        <width>31</width>
        <height>23</height>
       </rect>
@@ -191,8 +191,8 @@
     <widget class="QPushButton" name="srvTrackRWButton">
      <property name="geometry">
       <rect>
-       <x>170</x>
-       <y>80</y>
+       <x>140</x>
+       <y>90</y>
        <width>21</width>
        <height>23</height>
       </rect>
@@ -204,8 +204,8 @@
     <widget class="QPushButton" name="srvTrackPreviousButton">
      <property name="geometry">
       <rect>
-       <x>130</x>
-       <y>80</y>
+       <x>100</x>
+       <y>90</y>
        <width>31</width>
        <height>23</height>
       </rect>
@@ -261,6 +261,32 @@
      </property>
      <property name="text">
       <string>Select Playlist</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="srvTrackStopButton">
+     <property name="geometry">
+      <rect>
+       <x>270</x>
+       <y>90</y>
+       <width>41</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Stop</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="srvTrackPauseButton">
+     <property name="geometry">
+      <rect>
+       <x>170</x>
+       <y>90</y>
+       <width>41</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Pause</string>
      </property>
     </widget>
    </widget>

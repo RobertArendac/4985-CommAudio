@@ -3,7 +3,188 @@
 #include <map>
 #include <WS2tcpip.h>
 
+QAudioOutput *output;
+QBuffer *audioBuffer;
+QString prevTrack;
+
 std::map<SOCKET, std::string> clientMap;
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     bool isSongPlaying()
+--
+--  RETURNS:       returns true if audio is playing. Otherwise false;
+--
+--  DATE:          April 6, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      checks if audio is currently playing and returns appropriate bool value
+---------------------------------------------------------------------------------------*/
+bool audioPlaying()
+{
+    return (output->state() == QAudio::ActiveState);
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void resetPrevSong()
+--
+--  RETURNS:       void
+--
+--  DATE:          April 6, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      Resets the string of the previous song to be empty
+---------------------------------------------------------------------------------------*/
+void resetPrevSong()
+{
+    prevTrack = "";
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void initAudioOutput()
+--
+--  RETURNS:       void
+--
+--  DATE:          April 4, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      initializes audio format and audio output
+---------------------------------------------------------------------------------------*/
+void initAudioOutput()
+{
+    QAudioFormat format;
+
+    // set audio playback formatting
+    format.setSampleSize(SAMPLESIZE);
+    format.setSampleRate(SAMPLERATE);
+    format.setChannelCount(CHANNELCOUNT);
+    format.setCodec("audio/pcm");
+    format.setByteOrder(QAudioFormat::LittleEndian);
+    format.setSampleType(QAudioFormat::UnSignedInt);
+
+    // setup default output device
+    QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
+    if (!info.isFormatSupported(format))
+    {
+        qWarning()<<"raw audio format not supported by backend, cannot play audio.";
+        return;
+    }
+
+    // initialize output
+    output = new QAudioOutput(format);
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void stopAudio()
+--
+--  RETURNS:       void
+--
+--  DATE:          April 4, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      Stops audio from playing
+---------------------------------------------------------------------------------------*/
+void stopAudio()
+{
+    // check if audio is playing
+    if (output->state() == QAudio::ActiveState)
+    {
+        output->stop(); // stop the audio
+        output->reset();
+        audioBuffer->close();
+    }
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void pauseAudio()
+--
+--  RETURNS:       void
+--
+--  DATE:          April 4, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      Suspend audio
+---------------------------------------------------------------------------------------*/
+void pauseAudio()
+{
+    // check if audio is playing
+    if (output->state() == QAudio::ActiveState)
+    {
+        output->suspend(); // pause the audio
+    }
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void playAudio(QString &filePath)
+--                      QString &filePath: the filepath of audio file
+--
+--  RETURNS:       void
+--
+--  DATE:          April 4, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      initializes audio format and audio output
+---------------------------------------------------------------------------------------*/
+void playAudio(QString &filePath)
+{
+    qDebug() << prevTrack;
+
+    // create file handle for audio file
+    QFile audioFile(filePath);
+
+    // open audio file
+    if (audioFile.open(QIODevice::ReadOnly))
+    {   // check if user selected a different track
+        if (prevTrack != filePath || output->state() == QAudio::IdleState && prevTrack == filePath)
+        {
+            prevTrack = filePath;
+            // seek to raw audio data of wav file
+            audioFile.seek(AUDIODATA);
+
+            // extract raw audio data
+            QByteArray audio = audioFile.readAll();
+
+            // initialize audio buffer
+            audioBuffer = new QBuffer(&audio);
+            audioBuffer->open(QIODevice::ReadWrite);
+            audioBuffer->seek(0);
+            //qDebug() << audioBuffer->size();
+
+            output->start(audioBuffer); // play track
+
+            // event loop for tracck
+            QEventLoop loop;
+            QObject::connect(output, SIGNAL(stateChanged(QAudio::State)), &loop, SLOT(quit()));
+            do
+            {
+                loop.exec();
+            } while(output->state() == QAudio::ActiveState);
+        }
+    }
+}
 
 /*--------------------------------------------------------------------------------------
 --  INTERFACE:     SOCKADDR_IN serverCreateAddress(int port)
@@ -36,13 +217,15 @@ SOCKADDR_IN serverCreateAddress(int port)
 --                     ServerWindow *sw: GUI to update
 --                     int port: port to bind to
 --
---  RETURNS:       Struct containing all addressing information
+--  RETURNS:       void
 --
 --  DATE:          March 19, 2017
 --
+--  MODIFIED:      March 29, 2017 - Made function return an int ~ AZ
+--
 --  DESIGNER:      Robert Arendac
 --
---  PROGRAMMER:    Robert Arendac
+--  PROGRAMMER:    Robert Arendac, Alex Zielinski
 --
 --  NOTES:
 --      Starts up a TCP server.  Each new client will have its own dedicated thread to
@@ -55,24 +238,36 @@ void runTCPServer(ServerWindow *sw, int port)
 
     // Create socket for listening
     if ((listenSocket = createSocket(SOCK_STREAM, IPPROTO_TCP)) == NULL)
+    {
+        sw->updateServerStatus("Status: Socket Error");
         return;
+    }
 
     // Initialize address info
     addr = serverCreateAddress(port);
 
     // Bind the listening socket
     if (!bindSocket(listenSocket, &addr))
+    {
+        sw->updateServerStatus("Status: Socket Error");
         return;
+    }
 
     // Set socket to listen for connection
     if (!listenConnection(listenSocket))
+    {
+        sw->updateServerStatus("Status: Socket Error");
         return;
+    }
 
+    sw->updateServerStatus("Status: ON");
     // Accept incoming connections and put each client on thread
     while (1)
     {
         if (!acceptingSocket(&acceptSocket, listenSocket, (SOCKADDR *)&clientAddr))
+        {
             return;
+        }
 
         sw->updateClients(inet_ntoa(clientAddr.sin_addr));
         clientMap.insert(std::pair<SOCKET, std::string>(acceptSocket, inet_ntoa(clientAddr.sin_addr)));
@@ -80,7 +275,6 @@ void runTCPServer(ServerWindow *sw, int port)
 
         CreateThread(NULL, 0, tcpClient, &acceptSocket, 0, NULL);
     }
-
 }
 
 /*--------------------------------------------------------------------------------------
@@ -276,15 +470,16 @@ void CALLBACK clientRoutine(DWORD error, DWORD, LPWSAOVERLAPPED, DWORD)
 --                     ServerWindow *sw: GUI to update
 --                     int port: port to bind to
 --
---  RETURNS:       Struct containing all addressing information
+--  RETURNS:       void
 --
 --  DATE:          March 19, 2017
 --
 --  MODIFIED:      March 28, 2017 - Added multicasting capabilities
+--                 March 29, 2017 - Made function return an int ~ AZ
 --
 --  DESIGNER:      Robert Arendac
 --
---  PROGRAMMER:    RobertArendac
+--  PROGRAMMER:    RobertArendac, Alex Zielinski
 --
 --  NOTES:
 --      Starts up a UDP server.  Will be responsible for streaming audio.  Also sets up
@@ -303,11 +498,17 @@ void runUDPServer(ServerWindow *sw, int port)
 
     // Create a socket for incomming data
     if ((acceptSocket = createSocket(SOCK_DGRAM, IPPROTO_UDP)) == NULL)
+    {
+        sw->updateServerStatus("Status: Socket Error");
         return;
+    }
 
     // bind the socket
     if (!bindSocket(acceptSocket, &addr))
+    {
+        sw->updateServerStatus("Status: Socket Error");
         return;
+    }
 
     // Multicast interface
     stMreq.imr_multiaddr.s_addr = inet_addr(MCAST_ADDR);
@@ -315,13 +516,26 @@ void runUDPServer(ServerWindow *sw, int port)
 
     // Join multicast group, specify time-to-live, and disable loop
     if (!setServOptions(acceptSocket, IP_ADD_MEMBERSHIP, (char *)&stMreq))
+    {
+        sw->updateServerStatus("Status: Socket Error");
         return;
+    }
+
     if (!setServOptions(acceptSocket, IP_MULTICAST_TTL, (char *)&ttl))
+    {
+        sw->updateServerStatus("Status: Socket Error");
         return;
+    }
+
     if (!setServOptions(acceptSocket, IP_MULTICAST_LOOP, (char *)&flag))
+    {
+        sw->updateServerStatus("Status: Socket Error");
         return;
+    }
 
     cltDest = clientCreateAddress(MCAST_ADDR, MCAST_PORT);
+
+    sw->updateServerStatus("Status: ON");
 
     while (1)
     {

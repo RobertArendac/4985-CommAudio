@@ -41,13 +41,15 @@ SOCKADDR_IN clientCreateAddress(const char *host, int port)
 --                     const char *ip: Host to connect to
 --                     int port: Port to bind to
 --
---  RETURNS:
+--  RETURNS:       void
 --
 --  DATE:          March 19, 2017
 --
+--  MODIFIED:      March 30, 2017 - Update client status accordingly ~ AZ
+--
 --  DESIGNER:      Robert Arendac
 --
---  PROGRAMMER:    RobertArendac
+--  PROGRAMMER:    RobertArendac, Alex Zielinski
 --
 --  NOTES:
 --      Will connect to a TCP server. Once a connection is established, it will receive
@@ -66,11 +68,18 @@ void runTCPClient(ClientWindow *cw, const char *ip, int port)
 
     // Create a TCP socket
     if ((sck = createSocket(SOCK_STREAM, IPPROTO_TCP)) == NULL)
+    {
+        cw->updateClientStatus("Status: Socket Error");
         return;
+    }
 
     // Check for a valid host
     if (!connectHost(ip))
+    {
+        cw->updateClientStatus("Status: Host IP Error");
         return;
+    }
+
 
     // Initialize address info
     memset((char *)&addr, 0, sizeof(SOCKADDR_IN));
@@ -78,7 +87,11 @@ void runTCPClient(ClientWindow *cw, const char *ip, int port)
 
     // Connect to the server
     if (!connectToServer(sck, &addr))
+    {
+        cw->updateClientStatus("Status: Connection Error");
         return;
+    }
+
 
     cltSck = sck;
 
@@ -103,6 +116,7 @@ void runTCPClient(ClientWindow *cw, const char *ip, int port)
         fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
 
     free(si);
+    cw->updateClientStatus("Status: Connected");
 
     /* This is here because we do not have a graceful shutdown.  We will need to design all sockets
      * being closed and all TCP and UDP functions ending before performing any sort of cleanup.
@@ -120,13 +134,15 @@ void runTCPClient(ClientWindow *cw, const char *ip, int port)
 --                     const char *ip: Host to connect to
 --                     int port: Port to bind to
 --
---  RETURNS:
+--  RETURNS:       void
 --
 --  DATE:          March 19, 2017
 --
+--  MODIFIED:      March 30, 2017 - Update client status accordingly ~ AZ
+--
 --  DESIGNER:      Robert Arendac
 --
---  PROGRAMMER:    Robert Arendac
+--  PROGRAMMER:    Robert Arendac, Alex Zielinski
 --
 --  NOTES:
 --      Will set up a UDP socket for sending audio data.  Also joins a multicast group
@@ -141,11 +157,17 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port)
 
     // Create a UDP socket
     if ((sck = createSocket(SOCK_DGRAM, IPPROTO_UDP)) == NULL)
+    {
+        cw->updateClientStatus("Status: Socket Error");
         return;
+    }
 
     // Check for valid host
     if (!connectHost(ip))
+    {
+        cw->updateClientStatus("Status: Host IP Error");
         return;
+    }
 
     // Init address info
     memset((char *)&addr, 0, sizeof(SOCKADDR_IN));
@@ -153,14 +175,20 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port)
 
     // Set the reuse addr
     if (!setCltOptions(sck, SO_REUSEADDR, (char *)&flag))
+    {
+        cw->updateClientStatus("Status: Socket Error");
         return;
+    }
 
     memset((char *)&srvAddr, 0, sizeof(SOCKADDR_IN));
     srvAddr = serverCreateAddress(MCAST_PORT);
 
     // Bind to multicast group
     if (!bindSocket(sck, &srvAddr))
+    {
+        cw->updateClientStatus("Status: Socket Error");
         return;
+    }
 
     // Setup multicast interface
     stMreq.imr_multiaddr.s_addr = inet_addr(MCAST_ADDR);
@@ -168,7 +196,10 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port)
 
     // Join multicast group
     if (!setServOptions(sck, IP_ADD_MEMBERSHIP, (char *)&stMreq))
+    {
+        cw->updateClientStatus("Status: Socket Error");
         return;
+    }
 
     /* This is here because we do not have a graceful shutdown.  We will need to design all sockets
      * being closed and all TCP and UDP functions ending before performing any sort of cleanup.

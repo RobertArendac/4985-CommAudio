@@ -24,8 +24,9 @@ ClientWindow::ClientWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::ClientWindow)
 {
-    ui->setupUi(this);
 
+    ui->setupUi(this);
+    ui->cltStatusLabel->setText("Status: Not connected");
     // Start a winsock session
     if (!startWinsock())
         return;
@@ -39,7 +40,7 @@ ClientWindow::~ClientWindow()
 /*--------------------------------------------------------------------------------------
 --  INTERFACE:     void ClientWindow::on_cltConnect_clicked()
 --
---  RETURNS:
+--  RETURNS:       void
 --
 --  DATE:          March 19, 2017
 --
@@ -102,7 +103,7 @@ void ClientWindow::on_cltPlaySelectedTrackButton_clicked()
 ---------------------------------------------------------------------------------------*/
 void ClientWindow::on_cltDownloadSelectedTrackButton_clicked()
 {
-    downloadSong("Rolling_Stones_-_Gimme_Shelter.wav");
+    downloadSong("Queen - I Want to Break Free.mp3");
 }
 
 /*--------------------------------------------------------------------------------------
@@ -122,6 +123,7 @@ void ClientWindow::on_cltDownloadSelectedTrackButton_clicked()
 ---------------------------------------------------------------------------------------*/
 DWORD WINAPI ClientWindow::tcpClientThread(void *arg) {
     ThreadInfo *ti = (ThreadInfo *)arg;
+
     runTCPClient(ti->cWindow, ti->cltIP, ti->TCPPort);
 
     return 0;
@@ -144,6 +146,7 @@ DWORD WINAPI ClientWindow::tcpClientThread(void *arg) {
 ---------------------------------------------------------------------------------------*/
 DWORD WINAPI ClientWindow::udpClientThread(void *arg) {
     ThreadInfo *ti = (ThreadInfo *)arg;
+
     runUDPClient(ti->cWindow, ti->cltIP, ti->UDPPort);
 
     return 0;
@@ -170,4 +173,77 @@ void ClientWindow::updateSongs(QStringList songs)
     {
         ui->songList->addItem(song);
     }
+}
+
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void keyPressEvent(QKeyEvent* e);
+--                     QKeyEvent* e: the key that was pressed
+--
+--  RETURNS:       void
+--
+--  DATE:          March 29, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      Event handler for when the letter K is pressed (also held)
+---------------------   ------------------------------------------------------------------*/
+void ClientWindow::keyPressEvent(QKeyEvent* e)
+{
+    if(!e->isAutoRepeat())
+    {
+        if(e->key() == Qt::Key_K)
+        {
+            printf("K was pressed\n"); // temp for testing
+        }
+    }
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void clientWindow::keyReleaseEvent(QKeyEvent* e);
+--                     QKeyEvent* e: the key that was released
+--
+--  RETURNS:       void
+--
+--  DATE:          March 29, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      Event handler for when the letter K is released
+---------------------------------------------------------------------------------------*/
+void ClientWindow::keyReleaseEvent(QKeyEvent* e)
+{
+    if(!e->isAutoRepeat())
+    {
+        if(e->key() == Qt::Key_K)
+        {
+            printf("K was released\n"); // temp for testing
+        }
+    }
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void clientWindow::updateStatus(int status)
+--                     int status: return value of a function to determine status of client
+--
+--  RETURNS:       void
+--
+--  DATE:          March 29, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      Updates the status label of the client based on string that is passed in
+---------------------------------------------------------------------------------------*/
+void ClientWindow::updateClientStatus(QString status)
+{
+    ui->cltStatusLabel->setText(status);
 }
