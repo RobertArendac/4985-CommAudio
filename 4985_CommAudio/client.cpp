@@ -211,6 +211,22 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port)
     WSACleanup();
 }
 
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void requestSong(const char *song)
+--                      const char *song: the song being requested
+--
+--  RETURNS:       void
+--
+--  DATE:          April 7, 2017
+--
+--  DESIGNER:      Matt Goerwell
+--
+--  PROGRAMMER:    Matt Goerwell
+--
+--  NOTES:
+--      Method that requests a specific song be played by the server. Sends the request type,
+--      then sends the name of the song.
+---------------------------------------------------------------------------------------*/
 void requestSong(const char *song) {
     SocketInformation *si;
     WSAEVENT events[1];
@@ -256,6 +272,21 @@ void requestSong(const char *song) {
         fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
 }
 
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void updateClientSongs()
+--
+--  RETURNS:       void
+--
+--  DATE:          April 7, 2017
+--
+--  DESIGNER:      Matt Goerwell
+--
+--  PROGRAMMER:    Matt Goerwell
+--
+--  NOTES:
+--      Method that requests an update to the song list from the server. Sends the request type
+--      then waits to receive the song list.
+---------------------------------------------------------------------------------------*/
 void updateClientSongs() {
     SocketInformation *si;
     WSAEVENT events[1];
@@ -423,7 +454,7 @@ void CALLBACK songRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED o
 }
 
 /*--------------------------------------------------------------------------------------
---  INTERFACE:     void CALLBACK songRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD)
+--  INTERFACE:     void CALLBACK sendRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD)
 --                     DWORD error: Error that occured during WSASend()
 --                     DWORD bytesTransferred: Amount of bytes sent
 --                     LPWSAOVERLAPPED overlapped: Pointer to overlapped struct

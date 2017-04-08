@@ -476,6 +476,25 @@ void CALLBACK clientRoutine(DWORD error, DWORD, LPWSAOVERLAPPED, DWORD)
     }
 }
 
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void CALLBACK parseRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD)
+--                     DWORD error: error that occured during WSARecv()
+--                     DWORD bytesTransferred: the number of bytes received
+--                     LPWSAOVERLAPPED overlapped: pointer to overlapped struct
+--                     Other arg unused
+--
+--  RETURNS:       void
+--
+--  DATE:          April 7, 2017
+--
+--  DESIGNER:      Matt Goerwell
+--
+--  PROGRAMMER:    Matt Goerwell
+--
+--  NOTES:
+--      Completion routine for receiving a client request.  Checks for errors, then parses the
+--      request type made and proceeds to the appropriate method.
+---------------------------------------------------------------------------------------*/
 void CALLBACK parseRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD)
 {
     SocketInformation *si = (SocketInformation *)overlapped;
@@ -501,7 +520,21 @@ void CALLBACK parseRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
     }
 }
 
-
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void selectSong(LPWSAOVERLAPPED overlapped)
+--                     LPWSAOVERLAPPED overlapped: pointer to overlapped struct
+--
+--  RETURNS:       void
+--
+--  DATE:          April 7, 2017
+--
+--  DESIGNER:      Matt Goerwell
+--
+--  PROGRAMMER:    Matt Goerwell
+--
+--  NOTES:
+--      Method that plays a specific song for the user, in response to a request.
+---------------------------------------------------------------------------------------*/
 void selectSong(LPWSAOVERLAPPED overlapped) {
     DWORD result, recvBytes, flags = 0;
     WSAEVENT events[1];
@@ -521,7 +554,7 @@ void selectSong(LPWSAOVERLAPPED overlapped) {
     if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
         fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
 
-    //temporary until I know how song selection works.
+    //temporary until I know how song selection works. replace this with playing the song.
     fprintf(stdout,"Song name: %s\n",si->buffer);
 
 }
