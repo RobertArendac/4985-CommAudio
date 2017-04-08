@@ -388,7 +388,7 @@ void downloadSong(const char *song)
     fp = fopen(filename, "w");
     fclose(fp);
 
-    strcpy(si->buffer, song);
+    strcpy(si->buffer, "dl");
     si->bytesReceived = 0;
     si->bytesSent = 0;
     si->dataBuf.len = BUF_SIZE;
@@ -413,6 +413,22 @@ void downloadSong(const char *song)
     si->dataBuf.len = BUF_SIZE;
     si->dataBuf.buf = si->buffer;
 
+    // Sends the song name
+    WSASend(si->socket, &(si->dataBuf), 1, &sendBytes, 0, &(si->overlapped), sendRoutine);
+
+    if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
+        fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
+
+    ResetEvent(events[0]);
+
+    // Reset buffers in preparation to receive
+    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
+    memset(si->buffer, 0, sizeof(si->buffer));
+    si->bytesReceived = 0;
+    si->bytesSent = 0;
+    si->dataBuf.len = BUF_SIZE;
+    si->dataBuf.buf = si->buffer;
+
     // Receives song file
     WSARecv(si->socket, &(si->dataBuf), 1, &recvBytes, &flags, &(si->overlapped), downloadRoutine);
     if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
@@ -423,7 +439,6 @@ void downloadSong(const char *song)
     msg.exec();
 
     free(si);
-
 }
 
 /*--------------------------------------------------------------------------------------

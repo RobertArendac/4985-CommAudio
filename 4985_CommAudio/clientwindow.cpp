@@ -136,7 +136,7 @@ void ClientWindow::on_cltPlaySelectedTrackButton_clicked()
 ---------------------------------------------------------------------------------------*/
 void ClientWindow::on_cltDownloadSelectedTrackButton_clicked()
 {
-    downloadSong("Queen - I Want to Break Free.mp3");
+    downloadSong(ui->songList->currentItem()->text().toStdString().c_str());
 }
 
 /*--------------------------------------------------------------------------------------
