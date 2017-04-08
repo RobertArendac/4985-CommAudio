@@ -3,7 +3,188 @@
 #include <map>
 #include <WS2tcpip.h>
 
+QAudioOutput *output;
+QBuffer *audioBuffer;
+QString prevTrack;
+
 std::map<SOCKET, std::string> clientMap;
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     bool isSongPlaying()
+--
+--  RETURNS:       returns true if audio is playing. Otherwise false;
+--
+--  DATE:          April 6, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      checks if audio is currently playing and returns appropriate bool value
+---------------------------------------------------------------------------------------*/
+bool audioPlaying()
+{
+    return (output->state() == QAudio::ActiveState);
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void resetPrevSong()
+--
+--  RETURNS:       void
+--
+--  DATE:          April 6, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      Resets the string of the previous song to be empty
+---------------------------------------------------------------------------------------*/
+void resetPrevSong()
+{
+    prevTrack = "";
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void initAudioOutput()
+--
+--  RETURNS:       void
+--
+--  DATE:          April 4, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      initializes audio format and audio output
+---------------------------------------------------------------------------------------*/
+void initAudioOutput()
+{
+    QAudioFormat format;
+
+    // set audio playback formatting
+    format.setSampleSize(SAMPLESIZE);
+    format.setSampleRate(SAMPLERATE);
+    format.setChannelCount(CHANNELCOUNT);
+    format.setCodec("audio/pcm");
+    format.setByteOrder(QAudioFormat::LittleEndian);
+    format.setSampleType(QAudioFormat::UnSignedInt);
+
+    // setup default output device
+    QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
+    if (!info.isFormatSupported(format))
+    {
+        qWarning()<<"raw audio format not supported by backend, cannot play audio.";
+        return;
+    }
+
+    // initialize output
+    output = new QAudioOutput(format);
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void stopAudio()
+--
+--  RETURNS:       void
+--
+--  DATE:          April 4, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      Stops audio from playing
+---------------------------------------------------------------------------------------*/
+void stopAudio()
+{
+    // check if audio is playing
+    if (output->state() == QAudio::ActiveState)
+    {
+        output->stop(); // stop the audio
+        output->reset();
+        audioBuffer->close();
+    }
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void pauseAudio()
+--
+--  RETURNS:       void
+--
+--  DATE:          April 4, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      Suspend audio
+---------------------------------------------------------------------------------------*/
+void pauseAudio()
+{
+    // check if audio is playing
+    if (output->state() == QAudio::ActiveState)
+    {
+        output->suspend(); // pause the audio
+    }
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void playAudio(QString &filePath)
+--                      QString &filePath: the filepath of audio file
+--
+--  RETURNS:       void
+--
+--  DATE:          April 4, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      initializes audio format and audio output
+---------------------------------------------------------------------------------------*/
+void playAudio(QString &filePath)
+{
+    qDebug() << prevTrack;
+
+    // create file handle for audio file
+    QFile audioFile(filePath);
+
+    // open audio file
+    if (audioFile.open(QIODevice::ReadOnly))
+    {   // check if user selected a different track
+        if (prevTrack != filePath || output->state() == QAudio::IdleState && prevTrack == filePath)
+        {
+            prevTrack = filePath;
+            // seek to raw audio data of wav file
+            audioFile.seek(AUDIODATA);
+
+            // extract raw audio data
+            QByteArray audio = audioFile.readAll();
+
+            // initialize audio buffer
+            audioBuffer = new QBuffer(&audio);
+            audioBuffer->open(QIODevice::ReadWrite);
+            audioBuffer->seek(0);
+            //qDebug() << audioBuffer->size();
+
+            output->start(audioBuffer); // play track
+
+            // event loop for tracck
+            QEventLoop loop;
+            QObject::connect(output, SIGNAL(stateChanged(QAudio::State)), &loop, SLOT(quit()));
+            do
+            {
+                loop.exec();
+            } while(output->state() == QAudio::ActiveState);
+        }
+    }
+}
 
 /*--------------------------------------------------------------------------------------
 --  INTERFACE:     SOCKADDR_IN serverCreateAddress(int port)
@@ -114,46 +295,23 @@ void runTCPServer(ServerWindow *sw, int port)
 ---------------------------------------------------------------------------------------*/
 DWORD WINAPI tcpClient(void *arg)
 {
-    SOCKET *clientSck = (SOCKET *)arg;  //Client socket
-        std::string songlist;               //String of all songs
-        DWORD sendBytes, recvBytes, flags = 0;                    //Bytes to be sent
-        SocketInformation *si;              //Struct holding socket info
-        char music[SONG_SIZE];              //C-string of songs
-        WSAEVENT events[1];                 //Array of events (just one)
-        DWORD result;                       //Result of waiting for events
+    SOCKET *clientSck = (SOCKET *)arg;      //Client socket
+    DWORD sendBytes, recvBytes, flags = 0;  //Bytes to be sent
+    SocketInformation *si;                  //Struct holding socket info
+    WSAEVENT events[1];                     //Array of events (just one)
+    DWORD result;                           //Result of waiting for event
+    char musicPath[SONG_SIZE] = "../Music/";
 
-        // Build the song list
-        QStringList songs = ServerWindow::getSongs();
-        for (auto song : songs)
-        {
-            songlist += song.toStdString() + "\n";
-        }
+    // Fill out the socket info
+    si = (SocketInformation *)malloc(sizeof(SocketInformation));
+    si->socket = *clientSck;
 
-        // Copy the song list to a c-string, can't send std::string
-        strcpy(music, songlist.c_str());
+    sendSongs(si);
 
-        // Fill out the socket info
-        si = (SocketInformation *)malloc(sizeof(SocketInformation));
-        ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
-        memset(si->buffer, 0, sizeof(si->buffer));
-        strcpy(si->buffer, music);
-        si->socket = *clientSck;
-        si->bytesReceived = 0;
-        si->bytesSent = 0;
-        si->dataBuf.len = BUF_SIZE;
-        si->dataBuf.buf = si->buffer;
-
-        // Send the song list
-        WSASend(si->socket, &(si->dataBuf), 1, &sendBytes, 0, &(si->overlapped), clientRoutine);
-
-        // Wait for the send to complete
-        events[0] = WSACreateEvent();
-        if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
-            fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
-
-    ResetEvent(events[0]);
+    //Client request Parse loop
+    events[0] = WSACreateEvent();
     while (true) {
-
+        ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
         memset(si->buffer, 0, sizeof(si->buffer));
         si->bytesReceived = 0;
         si->bytesSent = 0;
@@ -166,6 +324,131 @@ DWORD WINAPI tcpClient(void *arg)
     }
 
     return 0;
+
+    /* Code below is for sending a song file to a client */
+    WSARecv(si->socket, &(si->dataBuf), 1, &recvBytes, &flags, &(si->overlapped), clientRoutine);
+
+    //Wait for receive to complete
+    events[0] = WSACreateEvent();
+    if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
+        fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
+
+    ResetEvent(events[0]);
+
+    strcat(musicPath, si->dataBuf.buf);
+
+    FILE *fp;
+    int sz;
+    fp = fopen(musicPath, "r+b");
+    fseek(fp, 0, SEEK_END);
+    sz = ftell(fp); // Size of the file
+    rewind(fp);
+    int loops;
+
+    // Calculate how many loops are needed and size of last packet
+    loops = sz / BUF_SIZE + (sz % BUF_SIZE != 0);
+    int lastSend = sz - ((loops - 1) * BUF_SIZE);
+
+    for (int i = 0; i < loops; i++)
+    {
+        ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
+        memset(si->buffer, 0, sizeof(si->buffer));
+        si->bytesReceived = 0;
+        si->bytesSent = 0;
+
+        if (i == loops - 1)
+        {
+            fread(si->buffer, 1, lastSend, fp);
+            si->dataBuf.len = lastSend;
+            si->dataBuf.buf = si->buffer;
+        }
+        else
+        {
+            fread(si->buffer, 1, BUF_SIZE, fp);
+
+            si->dataBuf.len = BUF_SIZE;
+            si->dataBuf.buf = si->buffer;
+        }
+
+        WSASend(si->socket, &(si->dataBuf), 1, &sendBytes, 0, &(si->overlapped), clientRoutine);
+
+        // Wait for the send to complete
+        if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
+            fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
+
+        ResetEvent(events[0]);
+    }
+
+    fclose(fp);
+
+    /* Send a packet that designates the file transfer is complete */
+
+    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
+    memset(si->buffer, 0, sizeof(si->buffer));
+
+    sprintf(si->buffer, "%s", "COMPLETE");
+
+    si->dataBuf.buf = si->buffer;
+    si->dataBuf.len = BUF_SIZE;
+
+    WSASend(si->socket, &(si->dataBuf), 1, &sendBytes, 0, &(si->overlapped), clientRoutine);
+
+    // Wait for the send to complete
+    if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
+        fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
+
+    ResetEvent(events[0]);
+
+    return 0;
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void sendSongs(SocketInformation *si)
+--                     SocketInformation *si: Struct holding all information needed for sending
+--
+--  RETURNS:
+--
+--  DATE:          April 3, 2017
+--
+--  DESIGNER:      Robert Arendac
+--
+--  PROGRAMMER:    Robert Arendac
+--
+--  NOTES:
+--      Sends a list of songs to the client
+---------------------------------------------------------------------------------------*/
+void sendSongs(SocketInformation *si)
+{
+    char music[SONG_SIZE];              //C-string of songs
+    WSAEVENT events[1];                 //Array of events (just one)
+    std::string songlist;               //String of all songs
+    DWORD result, sendBytes;
+
+    // Build the song list
+    QStringList songs = ServerWindow::getSongs();
+    for (auto song : songs)
+    {
+        songlist += song.toStdString() + "\n";
+    }
+
+    // Copy the song list to a c-string, can't send std::string
+    strcpy(music, songlist.c_str());
+
+    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
+    memset(si->buffer, 0, sizeof(si->buffer));
+    strcpy(si->buffer, music);
+    si->bytesReceived = 0;
+    si->bytesSent = 0;
+    si->dataBuf.len = BUF_SIZE;
+    si->dataBuf.buf = si->buffer;
+
+    // Send the song list
+    WSASend(si->socket, &(si->dataBuf), 1, &sendBytes, 0, &(si->overlapped), clientRoutine);
+
+    // Wait for the send to complete
+    events[0] = WSACreateEvent();
+    if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
+        fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
 }
 
 /*--------------------------------------------------------------------------------------
@@ -214,7 +497,7 @@ void CALLBACK parseRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
     } else if (strcmp("ul",si->buffer) == 0) {
 
     } else if (strcmp("updoot",si->buffer) == 0) {
-       updateClient(overlapped);
+       sendSongs(si);
     }
 }
 
@@ -239,38 +522,10 @@ void selectSong(LPWSAOVERLAPPED overlapped) {
         fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
 
     //temporary until I know how song selection works.
-    printf("Song name: %s\n",si->buffer);
+    fprintf(stdout,"Song name: %s\n",si->buffer);
 
 }
 
-void updateClient(LPWSAOVERLAPPED overlapped) {
-    std::string songlist;               //String of all songs
-    char music[BUF_SIZE];              //C-string of songs
-    DWORD result = 0;
-    DWORD sendBytes;
-    WSAEVENT events[1];
-    SocketInformation *si = (SocketInformation *)overlapped;
-    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
-    memset(si->buffer, 0, sizeof(si->buffer));
-    si->bytesReceived = 0;
-    si->bytesSent = 0;
-    si->dataBuf.len = BUF_SIZE;
-    si->dataBuf.buf = si->buffer;
-    // Build the song list
-    QStringList songs = ServerWindow::getSongs();
-    for (auto song : songs)
-    {
-        songlist += song.toStdString() + "\n";
-    }
-    strcpy(music, songlist.c_str());
-
-    WSASend(si->socket, &(si->dataBuf), 1, &sendBytes, 0, &(si->overlapped), clientRoutine);
-
-    // Wait for the send to complete
-    events[0] = WSACreateEvent();
-    if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
-        fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
-}
 
 /*--------------------------------------------------------------------------------------
 --  INTERFACE:     void runTCPServer(ServerWindow *sw, int port)

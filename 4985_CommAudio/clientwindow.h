@@ -10,6 +10,7 @@
 #include <QMessageBox>
 #include <QKeyEvent>
 #include <QShortcut>
+#include <QDebug>
 
 namespace Ui {
 class ClientWindow;

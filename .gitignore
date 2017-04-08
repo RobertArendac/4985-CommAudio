@@ -37,3 +37,7 @@ Makefile*
 CMakeLists.txt.user
 /Music
 
+Music/
+
+exe/
+
