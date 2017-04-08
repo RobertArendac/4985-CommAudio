@@ -37,6 +37,8 @@ Makefile*
 CMakeLists.txt.user
 
 Music/
+test/
+testSend/
 
 exe/
 

@@ -154,6 +154,9 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port)
     SOCKADDR_IN addr, srvAddr;  //Addresses for sending/receiving
     struct ip_mreq stMreq;      //Struct for multicasting
     int flag = 1;               //True flag
+    SocketInformation *si;
+    DWORD sendBytes, result;
+    WSAEVENT events[1];         //Event array
 
     // Create a UDP socket
     if ((sck = createSocket(SOCK_DGRAM, IPPROTO_UDP)) == NULL)
@@ -200,6 +203,29 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port)
         cw->updateClientStatus("Status: Socket Error");
         return;
     }
+
+    //Allocate socket information
+    si = (SocketInformation *)malloc(sizeof(SocketInformation));
+
+    //Fill in the socket info
+    si->socket = sck;
+    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
+    memset(si->buffer, 0, sizeof(si->buffer));
+    si->bytesReceived = 0;
+    si->bytesSent = 0;
+    si->dataBuf.len = BUF_SIZE;
+    si->dataBuf.buf = si->buffer;
+
+    //Testing UDP works, use as template for actually doing something useful
+    /*
+    WSASendTo(si->socket, &(si->dataBuf), 1, &sendBytes, 0, (SOCKADDR *)&addr, sizeof(SOCKADDR_IN), &(si->overlapped), clientRoutine);
+
+    //Wait for receive to complete
+    events[0] = WSACreateEvent();
+    if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
+        fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
+
+    */
 
     /* This is here because we do not have a graceful shutdown.  We will need to design all sockets
      * being closed and all TCP and UDP functions ending before performing any sort of cleanup.

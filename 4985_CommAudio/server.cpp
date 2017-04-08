@@ -1,6 +1,7 @@
 #include "server.h"
 #include "client.h"
 #include <map>
+#include <QDebug>
 #include <WS2tcpip.h>
 
 QAudioOutput *output;
@@ -492,6 +493,9 @@ void runUDPServer(ServerWindow *sw, int port)
     struct ip_mreq stMreq;      //Struct for multicasting
     u_long ttl = MCAST_TTL;     //Time to live
     int flag = 0;               //False flag
+    SocketInformation *si;
+    DWORD recvBytes, result, flags = 0;
+    WSAEVENT events[1];
 
     // Init address info
     addr = serverCreateAddress(port);
@@ -537,8 +541,31 @@ void runUDPServer(ServerWindow *sw, int port)
 
     sw->updateServerStatus("Status: ON");
 
+    //Allocate socket information
+    si = (SocketInformation *)malloc(sizeof(SocketInformation));
+
+    //Fill in the socket info
+    si->socket = acceptSocket;
+    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
+    memset(si->buffer, 0, sizeof(si->buffer));
+    si->bytesReceived = 0;
+    si->bytesSent = 0;
+    si->dataBuf.len = BUF_SIZE;
+    si->dataBuf.buf = si->buffer;
+
     while (1)
     {
-        // Do stuff
+        //Testing UDP works, use as template for actually doing something useful
+        /*
+        WSARecvFrom(si->socket, &(si->dataBuf), 1, &recvBytes, &flags, NULL, NULL, &(si->overlapped), newRoutine);
+
+        //Wait for receive to complete
+        events[0] = WSACreateEvent();
+        if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
+            fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
+
+        qDebug() << si->dataBuf.buf << endl;
+        */
+
     }
 }
