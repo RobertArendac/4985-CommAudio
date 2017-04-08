@@ -30,14 +30,16 @@ SOURCES += main.cpp\
     server.cpp \
     client.cpp \
     clientwindow.cpp \
-    serverwindow.cpp
+    serverwindow.cpp \
+    audio.cpp
 
 HEADERS  += mainwindow.h \
     wrappers.h \
     server.h \
     client.h \
     clientwindow.h \
-    serverwindow.h
+    serverwindow.h \
+    audio.h
 
 
 FORMS    += mainwindow.ui \
