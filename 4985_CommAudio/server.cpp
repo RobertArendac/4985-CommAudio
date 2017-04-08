@@ -569,21 +569,3 @@ void runUDPServer(ServerWindow *sw, int port)
 
     }
 }
-
-void CALLBACK newRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD)
-{
-    SocketInformation *si = (SocketInformation *)overlapped;
-
-    // Check for error or close connection request
-    if (error != 0 || bytesTransferred == 0)
-    {
-        if (error)
-        {
-            fprintf(stderr, "Error: %d\n", error);
-        }
-        fprintf(stderr, "Closing socket: %d\n", (int)si->socket);
-        closesocket(si->socket);
-        return;
-    }
-
-}
