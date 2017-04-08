@@ -71,9 +71,23 @@ void ClientWindow::on_cltSelectAllButton_clicked()
 
 }
 
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void ClientWindow::on_cltUpdateButton_clicked()
+--
+--  RETURNS:       void
+--
+--  DATE:          April 4, 2017
+--
+--  DESIGNER:      Matt Goerwell
+--
+--  PROGRAMMER:    Matt Goerwell
+--
+--  NOTES:
+--      Requests an update to the song list from the server.
+---------------------------------------------------------------------------------------*/
 void ClientWindow::on_cltUpdateButton_clicked()
 {
-
+    updateClientSongs();
 }
 
 void ClientWindow::on_cltUploadButton_clicked()
@@ -81,8 +95,27 @@ void ClientWindow::on_cltUploadButton_clicked()
 
 }
 
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void ClientWindow::on_cltPlaySelectedTrackButton_clicked()
+--
+--  RETURNS:       void
+--
+--  DATE:          April 4, 2017
+--
+--  DESIGNER:      Matt Goerwell
+--
+--  PROGRAMMER:    Matt Goerwell
+--
+--  NOTES:
+--      Requests that a specific song be played by the server.
+---------------------------------------------------------------------------------------*/
 void ClientWindow::on_cltPlaySelectedTrackButton_clicked()
 {
+    if (ui->songList->currentItem() != NULL )
+    {
+        const QString& song = ui->songList->currentItem()->text();
+        requestSong(song.toStdString().c_str());
+    }
 
 }
 
@@ -169,6 +202,7 @@ DWORD WINAPI ClientWindow::udpClientThread(void *arg) {
 ---------------------------------------------------------------------------------------*/
 void ClientWindow::updateSongs(QStringList songs)
 {
+    ui->songList->clear();
     for (auto song : songs)
     {
         ui->songList->addItem(song);

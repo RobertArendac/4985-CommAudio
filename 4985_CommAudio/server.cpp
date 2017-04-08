@@ -128,11 +128,23 @@ DWORD WINAPI tcpClient(void *arg)
 
     sendSongs(si);
 
-    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
-    memset(si->buffer, 0, sizeof(si->buffer));
+    //Client request Parse loop
+    events[0] = WSACreateEvent();
+    while (true)
+    {
+        ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
+        memset(si->buffer, 0, sizeof(si->buffer));
+        si->bytesReceived = 0;
+        si->bytesSent = 0;
+        si->dataBuf.len = BUF_SIZE;
+        si->dataBuf.buf = si->buffer;
+        WSARecv(si->socket, &(si->dataBuf), 1, &recvBytes, &flags, &(si->overlapped), parseRoutine);
+        if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
+            fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
+        ResetEvent(events[0]);
+    }
 
-    si->dataBuf.len = BUF_SIZE;
-    si->dataBuf.buf = si->buffer;
+    return 0;
 
     /* Code below is for sending a song file to a client */
     WSARecv(si->socket, &(si->dataBuf), 1, &recvBytes, &flags, &(si->overlapped), clientRoutine);
@@ -284,6 +296,93 @@ void CALLBACK clientRoutine(DWORD error, DWORD, LPWSAOVERLAPPED, DWORD)
         fprintf(stderr, "Error: %d\n", error);
     }
 }
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void CALLBACK parseRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD)
+--                     DWORD error: error that occured during WSARecv()
+--                     DWORD bytesTransferred: the number of bytes received
+--                     LPWSAOVERLAPPED overlapped: pointer to overlapped struct
+--                     Other arg unused
+--
+--  RETURNS:       void
+--
+--  DATE:          April 7, 2017
+--
+--  DESIGNER:      Matt Goerwell
+--
+--  PROGRAMMER:    Matt Goerwell
+--
+--  NOTES:
+--      Completion routine for receiving a client request.  Checks for errors, then parses the
+--      request type made and proceeds to the appropriate method.
+---------------------------------------------------------------------------------------*/
+void CALLBACK parseRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD)
+{
+    SocketInformation *si = (SocketInformation *)overlapped;
+    // Check for error or close connection request
+    if (error != 0 || bytesTransferred == 0)
+    {
+        if (error)
+        {
+            fprintf(stderr, "Error: %d\n", error);
+        }
+        fprintf(stderr, "Closing socket: %d\n", (int)si->socket);
+        closesocket(si->socket);
+        return;
+    }
+    if (strcmp("pick",si->buffer) == 0)
+    {
+        selectSong(si);
+    } else if (strcmp("dl",si->buffer) == 0)
+    {
+
+    } else if (strcmp("ul",si->buffer) == 0)
+    {
+
+    } else if (strcmp("update",si->buffer) == 0)
+    {
+       sendSongs(si);
+    }
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void selectSong(SocketInformation *si)
+--                     SocketInformation *si: Pointer to a valid Socket Info Struct
+--
+--  RETURNS:       void
+--
+--  DATE:          April 7, 2017
+--
+--  DESIGNER:      Matt Goerwell
+--
+--  PROGRAMMER:    Matt Goerwell
+--
+--  NOTES:
+--      Method that plays a specific song for the user, in response to a request.
+---------------------------------------------------------------------------------------*/
+void selectSong(SocketInformation *si)
+{
+    DWORD result, recvBytes, flags = 0;
+    WSAEVENT events[1];
+    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
+    memset(si->buffer, 0, sizeof(si->buffer));
+    si->bytesReceived = 0;
+    si->bytesSent = 0;
+    si->dataBuf.len = BUF_SIZE;
+    si->dataBuf.buf = si->buffer;
+
+    // Receive the song
+    WSARecv(si->socket, &(si->dataBuf), 1, &recvBytes, &flags, &(si->overlapped), clientRoutine);
+
+    // Wait for the receive to complete
+    events[0] = WSACreateEvent();
+    if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
+        fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
+
+    //temporary until I know how song selection works. replace this with playing the song.
+    fprintf(stdout,"Song name: %s\n",si->buffer);
+}
+
 
 /*--------------------------------------------------------------------------------------
 --  INTERFACE:     void runTCPServer(ServerWindow *sw, int port)
