@@ -62,7 +62,7 @@ bool audioPlaying()
 ---------------------------------------------------------------------------------------*/
 void resetPrevTrack()
 {
-    prevTrack = "";
+    prevTrack.clear();
 }
 
 /*--------------------------------------------------------------------------------------
@@ -95,7 +95,7 @@ void initAudioOutput()
     QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
     if (!info.isFormatSupported(format))
     {
-        qDebug()<<"raw audio format not supported by backend, cannot play audio.";
+        qDebug() << "raw audio format not supported by backend, cannot play audio.";
         return;
     }
 
@@ -122,7 +122,7 @@ void play(QString filePath)
 {
     currTrack = filePath; // set current track to what user selected
     loadAudioData(currTrack); // load raw data from wav file to a buffer
-    //loadAudioStream();
+    //loadAudioStream(); ** implement later **
     playStream();
 }
 
@@ -177,7 +177,7 @@ void loadAudioData(QString filePath)
 ---------------------------------------------------------------------------------------*/
 void loadAudioStream()
 {
-
+    // ** implement later **
 }
 
 /*--------------------------------------------------------------------------------------
