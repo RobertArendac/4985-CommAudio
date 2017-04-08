@@ -13,17 +13,8 @@
 #include <QEventLoop>
 #include "wrappers.h"
 
-#define CHANNELCOUNT 2
-#define SAMPLERATE 44100
-#define SAMPLESIZE 16
-#define AUDIODATA 44
-
-bool audioPlaying();
-void resetPrevSong();
-void playAudio(QString &filePath);
-void initAudioOutput();
+void playAudio(QString filePath);
 void pauseAudio();
-void stopAudio();
 void runTCPServer(ServerWindow *sw, int port);
 void runUDPServer(ServerWindow *sw, int port);
 SOCKADDR_IN serverCreateAddress(int port);

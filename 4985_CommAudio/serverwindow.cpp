@@ -19,6 +19,7 @@
 #include "serverwindow.h"
 #include "ui_serverwindow.h"
 #include "server.h"
+#include "audio.h"
 #include <QDir>
 #include <QListWidget>
 #include <QDataStream>
@@ -95,7 +96,7 @@ void ServerWindow::on_srvTrackPlayButton_clicked()
 {
     // get track name that is currently selected from widget list
     QString audioFilePath = "../Music/" + ui->musicList->currentItem()->text();
-    playAudio(audioFilePath);
+    play(audioFilePath);
 }
 
 /*--------------------------------------------------------------------------------------
@@ -134,7 +135,7 @@ void ServerWindow::updateServerStatus(QString status)
 void ServerWindow::on_srvTrackStopButton_clicked()
 {
     stopAudio();
-    resetPrevSong();
+    resetPrevTrack();
 }
 
 /*--------------------------------------------------------------------------------------
@@ -191,7 +192,7 @@ void ServerWindow::playNextTrack()
         // check if audio is playing
         if(audioPlaying())
         {   // keep playing audio
-            playAudio(audioFilePath);
+            play(audioFilePath);
         }
     }
     else // current element is not last element
@@ -205,7 +206,7 @@ void ServerWindow::playNextTrack()
         // check if audio is playing
         if(audioPlaying())
         {   // keep playing audio
-            playAudio(audioFilePath);
+            play(audioFilePath);
         }
     }
 }
@@ -240,7 +241,7 @@ void ServerWindow::playPrevTrack()
         // check if audio is playing
         if(audioPlaying())
         {   // keep playing audio
-            playAudio(audioFilePath);
+            play(audioFilePath);
         }
     }
     else // current element is not first element
@@ -254,7 +255,7 @@ void ServerWindow::playPrevTrack()
         // check if audio is playing
         if(audioPlaying())
         {   // keep playing audio
-            playAudio(audioFilePath);
+            play(audioFilePath);
         }
     }
 }
