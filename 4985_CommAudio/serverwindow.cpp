@@ -20,6 +20,8 @@
 #include "ui_serverwindow.h"
 #include "server.h"
 #include <QDir>
+#include <QListWidget>
+#include <QDataStream>
 
 #define CLIENT_SIZE 32
 
@@ -34,6 +36,7 @@ ServerWindow::ServerWindow(QWidget *parent) :
         return;
 
     createSongList();
+    initAudioOutput();
 }
 
 ServerWindow::~ServerWindow()
@@ -44,7 +47,7 @@ ServerWindow::~ServerWindow()
 /*--------------------------------------------------------------------------------------
 --  INTERFACE:     void ServerWindow::on_srvStartStopButton_clicked()
 --
---  RETURNS:
+--  RETURNS:       void
 --
 --  DATE:          March 19, 2017
 --
@@ -69,17 +72,86 @@ void ServerWindow::on_srvStartStopButton_clicked()
     CreateThread(NULL, 0, ServerWindow::udpServerThread, (void *)ti, 0, NULL);
 }
 
-void ServerWindow::on_srvTrackPreviousButton_clicked()
-{
-
-}
-
 void ServerWindow::on_srvTrackRWButton_clicked()
 {
 
 }
 
-void ServerWindow::on_srvTrackPlayPauseButton_clicked()
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void ServerWindow::on_srvTrackPlayPauseButton_clicked()
+--
+--  RETURNS:       void
+--
+--  DATE:          April 1, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      Onclick method for play button. Plays selected song
+---------------------------------------------------------------------------------------*/
+void ServerWindow::on_srvTrackPlayButton_clicked()
+{
+    // get track name that is currently selected from widget list
+    QString audioFilePath = "../Music/" + ui->musicList->currentItem()->text();
+    playAudio(audioFilePath);
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     ServerWindow::updateServerStatus(int status)
+--
+--  RETURNS:       void
+--
+--  DATE:          March 30, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      Updates the status label of the client based on string that is passed in
+---------------------------------------------------------------------------------------*/
+void ServerWindow::updateServerStatus(QString status)
+{
+    ui->srvStatusLabel->setText(status);
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void ServerWindow::on_srvTrackStopButton_clicked()
+--
+--  RETURNS:       void
+--
+--  DATE:          April 4, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      Stops playing audio if audio is playing
+---------------------------------------------------------------------------------------*/
+void ServerWindow::on_srvTrackStopButton_clicked()
+{
+    stopAudio();
+    resetPrevSong();
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void ServerWindow::on_srvTrackPauseButton_clicked()
+--
+--  RETURNS:       void
+--
+--  DATE:          April 4, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      Pause audio if audio is playing
+---------------------------------------------------------------------------------------*/
+void ServerWindow::on_srvTrackPauseButton_clicked()
 {
 
 }
@@ -89,9 +161,140 @@ void ServerWindow::on_srvTrackFFButton_clicked()
 
 }
 
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void ServerWindow::playNextTrack()
+--
+--  RETURNS:       void
+--
+--  DATE:          April 6, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      Function containing actual logic to go to next track. It will play the next
+--      track if audio is currently playing. If no audio is playing then it simply sets
+--      the current position of the musicList to be the next track.
+---------------------------------------------------------------------------------------*/
+void ServerWindow::playNextTrack()
+{
+    // check if current element is last element
+    if (ui->musicList->currentRow() == ui->musicList->count() - 1)
+    {
+        // set current row to first row
+        ui->musicList->setCurrentRow(0);
+
+        // get track name that is currently selected from widget list
+        QString audioFilePath = "../Music/" + ui->musicList->currentItem()->text();
+
+        // check if audio is playing
+        if(audioPlaying())
+        {   // keep playing audio
+            playAudio(audioFilePath);
+        }
+    }
+    else // current element is not last element
+    {
+        // set current row to be next row
+        ui->musicList->setCurrentRow(ui->musicList->currentRow() + 1);
+
+        // get track name that is currently selected from widget list
+        QString audioFilePath = "../Music/" + ui->musicList->currentItem()->text();
+
+        // check if audio is playing
+        if(audioPlaying())
+        {   // keep playing audio
+            playAudio(audioFilePath);
+        }
+    }
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void ServerWindow::playPrevTrack()
+--
+--  RETURNS:       void
+--
+--  DATE:          April 6, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      Function containing actual logic to go to previous track. It will play the next
+--      track if audio is currently playing. If no audio is playing then it simply sets
+--      the current position of the musicList to be the previous track.
+---------------------------------------------------------------------------------------*/
+void ServerWindow::playPrevTrack()
+{
+    // check if current element is first element
+    if (ui->musicList->currentRow() == 0)
+    {
+        // set current row to last row
+        ui->musicList->setCurrentRow(ui->musicList->count() - 1);
+
+        // get track name that is currently selected from widget list
+        QString audioFilePath = "../Music/" + ui->musicList->currentItem()->text();
+
+        // check if audio is playing
+        if(audioPlaying())
+        {   // keep playing audio
+            playAudio(audioFilePath);
+        }
+    }
+    else // current element is not first element
+    {
+        // set current row be 1 row behind
+        ui->musicList->setCurrentRow(ui->musicList->currentRow() - 1);
+
+        // get track name that is currently selected from widget list
+        QString audioFilePath = "../Music/" + ui->musicList->currentItem()->text();
+
+        // check if audio is playing
+        if(audioPlaying())
+        {   // keep playing audio
+            playAudio(audioFilePath);
+        }
+    }
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void ServerWindow::on_srvTrackNextButton_clicked()
+--
+--  RETURNS:       void
+--
+--  DATE:          April 6, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      onClick function for clicking on the next track button
+---------------------------------------------------------------------------------------*/
 void ServerWindow::on_srvTrackNextButton_clicked()
 {
+    playNextTrack();
+}
 
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void ServerWindow::on_srvTrackPreviousButton_clicked()
+--
+--  RETURNS:       void
+--
+--  DATE:          April 6, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      onClick function for clicking on the previous track button
+---------------------------------------------------------------------------------------*/
+void ServerWindow::on_srvTrackPreviousButton_clicked()
+{
+    playPrevTrack();
 }
 
 void ServerWindow::on_srvShuffleRadioButton_clicked()
@@ -178,9 +381,11 @@ QStringList ServerWindow::getSongs()
 --
 --  DATE:          March 26, 2017
 --
+--  MODIFIED       April 1 - Set first item of list to be selected by default ~ AZ
+--
 --  DESIGNER:      Robert Arendac
 --
---  PROGRAMMER:    Robert Arendac
+--  PROGRAMMER:    Robert Arendac, Alex Zielinski
 --
 --  NOTES:
 --      Gets the songs in the Music folder and adds them to the GUI
@@ -192,6 +397,8 @@ void ServerWindow::createSongList()
     {
         ui->musicList->addItem(song);
     }
+    // set first item to be currently selected
+    ui->musicList->setCurrentItem(ui->musicList->item(0));
 }
 
 /********************************************************
@@ -217,24 +424,4 @@ void ServerWindow::updateClients(const char *client)
 void ServerWindow::on_srvSelectPlaylistButton_clicked()
 {
 
-}
-
-
-/*--------------------------------------------------------------------------------------
---  INTERFACE:     ServerWindow::updateServerStatus(int status)
---
---  RETURNS:       void
---
---  DATE:          March 30, 2017
---
---  DESIGNER:      Alex Zielinski
---
---  PROGRAMMER:    Alex Zielinski
---
---  NOTES:
---      Updates the status label of the client based on string that is passed in
----------------------------------------------------------------------------------------*/
-void ServerWindow::updateServerStatus(QString status)
-{
-    ui->srvStatusLabel->setText(status);
 }

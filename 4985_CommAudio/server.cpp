@@ -3,7 +3,188 @@
 #include <map>
 #include <WS2tcpip.h>
 
+QAudioOutput *output;
+QBuffer *audioBuffer;
+QString prevTrack;
+
 std::map<SOCKET, std::string> clientMap;
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     bool isSongPlaying()
+--
+--  RETURNS:       returns true if audio is playing. Otherwise false;
+--
+--  DATE:          April 6, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      checks if audio is currently playing and returns appropriate bool value
+---------------------------------------------------------------------------------------*/
+bool audioPlaying()
+{
+    return (output->state() == QAudio::ActiveState);
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void resetPrevSong()
+--
+--  RETURNS:       void
+--
+--  DATE:          April 6, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      Resets the string of the previous song to be empty
+---------------------------------------------------------------------------------------*/
+void resetPrevSong()
+{
+    prevTrack = "";
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void initAudioOutput()
+--
+--  RETURNS:       void
+--
+--  DATE:          April 4, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      initializes audio format and audio output
+---------------------------------------------------------------------------------------*/
+void initAudioOutput()
+{
+    QAudioFormat format;
+
+    // set audio playback formatting
+    format.setSampleSize(SAMPLESIZE);
+    format.setSampleRate(SAMPLERATE);
+    format.setChannelCount(CHANNELCOUNT);
+    format.setCodec("audio/pcm");
+    format.setByteOrder(QAudioFormat::LittleEndian);
+    format.setSampleType(QAudioFormat::UnSignedInt);
+
+    // setup default output device
+    QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
+    if (!info.isFormatSupported(format))
+    {
+        qWarning()<<"raw audio format not supported by backend, cannot play audio.";
+        return;
+    }
+
+    // initialize output
+    output = new QAudioOutput(format);
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void stopAudio()
+--
+--  RETURNS:       void
+--
+--  DATE:          April 4, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      Stops audio from playing
+---------------------------------------------------------------------------------------*/
+void stopAudio()
+{
+    // check if audio is playing
+    if (output->state() == QAudio::ActiveState)
+    {
+        output->stop(); // stop the audio
+        output->reset();
+        audioBuffer->close();
+    }
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void pauseAudio()
+--
+--  RETURNS:       void
+--
+--  DATE:          April 4, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      Suspend audio
+---------------------------------------------------------------------------------------*/
+void pauseAudio()
+{
+    // check if audio is playing
+    if (output->state() == QAudio::ActiveState)
+    {
+        output->suspend(); // pause the audio
+    }
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void playAudio(QString &filePath)
+--                      QString &filePath: the filepath of audio file
+--
+--  RETURNS:       void
+--
+--  DATE:          April 4, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      initializes audio format and audio output
+---------------------------------------------------------------------------------------*/
+void playAudio(QString &filePath)
+{
+    qDebug() << prevTrack;
+
+    // create file handle for audio file
+    QFile audioFile(filePath);
+
+    // open audio file
+    if (audioFile.open(QIODevice::ReadOnly))
+    {   // check if user selected a different track
+        if (prevTrack != filePath || output->state() == QAudio::IdleState && prevTrack == filePath)
+        {
+            prevTrack = filePath;
+            // seek to raw audio data of wav file
+            audioFile.seek(AUDIODATA);
+
+            // extract raw audio data
+            QByteArray audio = audioFile.readAll();
+
+            // initialize audio buffer
+            audioBuffer = new QBuffer(&audio);
+            audioBuffer->open(QIODevice::ReadWrite);
+            audioBuffer->seek(0);
+            //qDebug() << audioBuffer->size();
+
+            output->start(audioBuffer); // play track
+
+            // event loop for tracck
+            QEventLoop loop;
+            QObject::connect(output, SIGNAL(stateChanged(QAudio::State)), &loop, SLOT(quit()));
+            do
+            {
+                loop.exec();
+            } while(output->state() == QAudio::ActiveState);
+        }
+    }
+}
 
 /*--------------------------------------------------------------------------------------
 --  INTERFACE:     SOCKADDR_IN serverCreateAddress(int port)
