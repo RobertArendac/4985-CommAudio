@@ -180,6 +180,22 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port)
     WSACleanup();
 }
 
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void downloadSong(const char *song)
+--                     const char *song - Song to download
+--
+--  RETURNS:
+--
+--  DATE:          April 3, 2017
+--
+--  DESIGNER:      Robert Arendac
+--
+--  PROGRAMMER:    Robert Arendac
+--
+--  NOTES:
+--      Temporary download song method.  Will send song name to server and then prepare
+--      to download it.  User is first prompted to enter a save path before any downloading begins
+---------------------------------------------------------------------------------------*/
 void downloadSong(const char *song)
 {
     FILE *fp;
@@ -198,7 +214,7 @@ void downloadSong(const char *song)
     strcpy(filename, QFileDialog::getSaveFileName(NULL, "Save Audio File", song, "(*.wav) (*.mp3)").toStdString().c_str());
 
     // Clear the file
-    fp = fopen("../test/test.mp3", "w");
+    fp = fopen(filename, "w");
     fclose(fp);
 
     strcpy(si->buffer, song);
@@ -234,6 +250,8 @@ void downloadSong(const char *song)
     // Notify user download is complete, could probably be refined into something better
     QMessageBox msg(QMessageBox::Information, "Notice:", "Download complete!");
     msg.exec();
+
+    free(si);
 
 }
 
@@ -290,10 +308,27 @@ void CALLBACK songRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED o
     memset(si->buffer, 0, sizeof(si->buffer));
 }
 
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void CALLBACK songRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD)
+--                     DWORD error: Error that occured during WSASend()
+--                     DWORD bytesTransferred: Amount of bytes sent
+--                     LPWSAOVERLAPPED overlapped: Pointer to overlapped struct
+--
+--  RETURNS:       void
+--
+--  DATE:          April 3, 2017
+--
+--  DESIGNER:      Robert Arendac
+--
+--  PROGRAMMER:    Robert Arendac
+--
+--  NOTES:
+--      Completion routine for sending.  Simply checks if something went wrong and then
+--      clears the buffers.
+---------------------------------------------------------------------------------------*/
 void CALLBACK sendRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD)
 {
     SocketInformation *si = (SocketInformation *)overlapped;
-    DWORD recvBytes, flags = 0;
 
     // Check for error or close connection request
     if (error != 0 || bytesTransferred == 0)
@@ -318,7 +353,7 @@ void CALLBACK sendRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED o
 void CALLBACK downloadRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
 {
     SocketInformation *si = (SocketInformation *)overlapped;
-    DWORD recvBytes, fFlags = 0;
+    DWORD recvBytes;
     FILE *fp;
     char eot[1];   //End of transmission character
     sprintf(eot, "%c", 4);
@@ -336,7 +371,7 @@ void CALLBACK downloadRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPP
     }
 
     // Check for end of transmission
-    if (strcmp(si->dataBuf.buf, eot) == 0)
+    if (strcmp(si->dataBuf.buf, "COMPLETE") == 0)
         return;
 
     //Write chunk to file
@@ -351,5 +386,5 @@ void CALLBACK downloadRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPP
     si->dataBuf.len = BUF_SIZE;
     si->dataBuf.buf = si->buffer;
 
-    WSARecv(si->socket, &(si->dataBuf), 1, &recvBytes, &fFlags, &(si->overlapped), downloadRoutine);
+    WSARecv(si->socket, &(si->dataBuf), 1, &recvBytes, &flags, &(si->overlapped), downloadRoutine);
 }

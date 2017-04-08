@@ -85,9 +85,24 @@ void ClientWindow::on_cltPlaySelectedTrackButton_clicked()
 
 }
 
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void ClientWindow::on_cltDownloadSelectedTrackButton_clicked()
+--
+--  RETURNS:
+--
+--  DATE:          April 3, 2017
+--
+--  DESIGNER:      Robert Arendac
+--
+--  PROGRAMMER:    RobertArendac
+--
+--  NOTES:
+--      Downloads selected song.  Currently hard coded, CHANGE WHEN REQUEST STATES
+--      ARE COMPLETED!!!
+---------------------------------------------------------------------------------------*/
 void ClientWindow::on_cltDownloadSelectedTrackButton_clicked()
 {
-    downloadSong("blah");
+    downloadSong("Rolling_Stones_-_Gimme_Shelter.wav");
 }
 
 /*--------------------------------------------------------------------------------------
