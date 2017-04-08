@@ -136,10 +136,11 @@ DWORD WINAPI tcpClient(void *arg)
     int sz;
     fp = fopen(musicPath, "r+b");
     fseek(fp, 0, SEEK_END);
-    sz = ftell(fp);
+    sz = ftell(fp); // Size of the file
     rewind(fp);
     int loops;
 
+    // Calculate how many loops are needed and size of last packet
     loops = sz / BUF_SIZE + (sz % BUF_SIZE != 0);
     int lastSend = sz - ((loops - 1) * BUF_SIZE);
 
