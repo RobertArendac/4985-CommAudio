@@ -381,13 +381,30 @@ void CALLBACK sendRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED o
 
 }
 
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void CALLBACK downloadRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
+--                     DWORD error: Error that occured during WSASend()
+--                     DWORD bytesTransferred: Amount of bytes sent
+--                     LPWSAOVERLAPPED overlapped: Pointer to overlapped struct
+--                     DWORD flags: flags for receiving
+--
+--  RETURNS:       void
+--
+--  DATE:          April 3, 2017
+--
+--  DESIGNER:      Robert Arendac
+--
+--  PROGRAMMER:    Robert Arendac
+--
+--  NOTES:
+--      Completion routine for downloading a song.  Receives each packet and appends it
+--      to the save file
+---------------------------------------------------------------------------------------*/
 void CALLBACK downloadRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
 {
     SocketInformation *si = (SocketInformation *)overlapped;
     DWORD recvBytes;
     FILE *fp;
-    char eot[1];   //End of transmission character
-    sprintf(eot, "%c", 4);
 
     // Check for error or close connection request
     if (error != 0 || bytesTransferred == 0)
