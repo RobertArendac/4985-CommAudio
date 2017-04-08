@@ -8,6 +8,9 @@
 SOCKADDR_IN clientCreateAddress(const char *host, int port);
 void runTCPClient(ClientWindow *cw, const char *ip, int port);
 void runUDPClient(ClientWindow *cw, const char *ip, int port);
+void requestSong(const char *song);
+void updateClientSongs();
 void CALLBACK songRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
+void CALLBACK pickRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
 
 #endif // CLIENT_H

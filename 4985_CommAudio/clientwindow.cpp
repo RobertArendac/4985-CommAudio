@@ -73,7 +73,7 @@ void ClientWindow::on_cltSelectAllButton_clicked()
 
 void ClientWindow::on_cltUpdateButton_clicked()
 {
-
+    updateClientSongs();
 }
 
 void ClientWindow::on_cltUploadButton_clicked()
@@ -83,6 +83,10 @@ void ClientWindow::on_cltUploadButton_clicked()
 
 void ClientWindow::on_cltPlaySelectedTrackButton_clicked()
 {
+    if (ui->songList->currentItem() != NULL ) {
+    const QString& song = ui->songList->currentItem()->text();
+        requestSong(song.toStdString().c_str());
+    }
 
 }
 
@@ -154,6 +158,7 @@ DWORD WINAPI ClientWindow::udpClientThread(void *arg) {
 ---------------------------------------------------------------------------------------*/
 void ClientWindow::updateSongs(QStringList songs)
 {
+    ui->songList->clear();
     for (auto song : songs)
     {
         ui->songList->addItem(song);

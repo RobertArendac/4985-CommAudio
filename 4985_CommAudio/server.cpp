@@ -115,41 +115,55 @@ void runTCPServer(ServerWindow *sw, int port)
 DWORD WINAPI tcpClient(void *arg)
 {
     SOCKET *clientSck = (SOCKET *)arg;  //Client socket
-    std::string songlist;               //String of all songs
-    DWORD sendBytes;                    //Bytes to be sent
-    SocketInformation *si;              //Struct holding socket info
-    char music[SONG_SIZE];              //C-string of songs
-    WSAEVENT events[1];                 //Array of events (just one)
-    DWORD result;                       //Result of waiting for events
+        std::string songlist;               //String of all songs
+        DWORD sendBytes, recvBytes, flags = 0;                    //Bytes to be sent
+        SocketInformation *si;              //Struct holding socket info
+        char music[SONG_SIZE];              //C-string of songs
+        WSAEVENT events[1];                 //Array of events (just one)
+        DWORD result;                       //Result of waiting for events
 
-    // Build the song list
-    QStringList songs = ServerWindow::getSongs();
-    for (auto song : songs)
-    {
-        songlist += song.toStdString() + "\n";
+        // Build the song list
+        QStringList songs = ServerWindow::getSongs();
+        for (auto song : songs)
+        {
+            songlist += song.toStdString() + "\n";
+        }
+
+        // Copy the song list to a c-string, can't send std::string
+        strcpy(music, songlist.c_str());
+
+        // Fill out the socket info
+        si = (SocketInformation *)malloc(sizeof(SocketInformation));
+        ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
+        memset(si->buffer, 0, sizeof(si->buffer));
+        strcpy(si->buffer, music);
+        si->socket = *clientSck;
+        si->bytesReceived = 0;
+        si->bytesSent = 0;
+        si->dataBuf.len = BUF_SIZE;
+        si->dataBuf.buf = si->buffer;
+
+        // Send the song list
+        WSASend(si->socket, &(si->dataBuf), 1, &sendBytes, 0, &(si->overlapped), clientRoutine);
+
+        // Wait for the send to complete
+        events[0] = WSACreateEvent();
+        if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
+            fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
+
+    ResetEvent(events[0]);
+    while (true) {
+
+        memset(si->buffer, 0, sizeof(si->buffer));
+        si->bytesReceived = 0;
+        si->bytesSent = 0;
+        si->dataBuf.len = BUF_SIZE;
+        si->dataBuf.buf = si->buffer;
+        WSARecv(si->socket, &(si->dataBuf), 1, &recvBytes, &flags, &(si->overlapped), parseRoutine);
+        if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
+            fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
+        ResetEvent(events[0]);
     }
-
-    // Copy the song list to a c-string, can't send std::string
-    strcpy(music, songlist.c_str());
-
-    // Fill out the socket info
-    si = (SocketInformation *)malloc(sizeof(SocketInformation));
-    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
-    memset(si->buffer, 0, sizeof(si->buffer));
-    strcpy(si->buffer, music);
-    si->socket = *clientSck;
-    si->bytesReceived = 0;
-    si->bytesSent = 0;
-    si->dataBuf.buf = si->buffer;
-    si->dataBuf.len = SONG_SIZE;
-
-    // Send the song list
-    WSASend(si->socket, &(si->dataBuf), 1, &sendBytes, 0, &(si->overlapped), clientRoutine);
-
-    // Wait for the send to complete
-    events[0] = WSACreateEvent();
-    if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
-        fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
 
     return 0;
 }
@@ -177,6 +191,85 @@ void CALLBACK clientRoutine(DWORD error, DWORD, LPWSAOVERLAPPED, DWORD)
     {
         fprintf(stderr, "Error: %d\n", error);
     }
+}
+
+void CALLBACK parseRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD)
+{
+    SocketInformation *si = (SocketInformation *)overlapped;
+    // Check for error or close connection request
+    if (error != 0 || bytesTransferred == 0)
+    {
+        if (error)
+        {
+            fprintf(stderr, "Error: %d\n", error);
+        }
+        fprintf(stderr, "Closing socket: %d\n", (int)si->socket);
+        closesocket(si->socket);
+        return;
+    }
+    if (strcmp("pick",si->buffer) == 0) {
+        selectSong(overlapped);
+    } else if (strcmp("dl",si->buffer) == 0) {
+
+    } else if (strcmp("ul",si->buffer) == 0) {
+
+    } else if (strcmp("updoot",si->buffer) == 0) {
+       updateClient(overlapped);
+    }
+}
+
+
+void selectSong(LPWSAOVERLAPPED overlapped) {
+    DWORD result, recvBytes, flags = 0;
+    WSAEVENT events[1];
+    SocketInformation *si = (SocketInformation *)overlapped;
+    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
+    memset(si->buffer, 0, sizeof(si->buffer));
+    si->bytesReceived = 0;
+    si->bytesSent = 0;
+    si->dataBuf.len = BUF_SIZE;
+    si->dataBuf.buf = si->buffer;
+
+    // Receive the song
+    WSARecv(si->socket, &(si->dataBuf), 1, &recvBytes, &flags, &(si->overlapped), clientRoutine);
+
+    // Wait for the receive to complete
+    events[0] = WSACreateEvent();
+    if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
+        fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
+
+    //temporary until I know how song selection works.
+    printf("Song name: %s\n",si->buffer);
+
+}
+
+void updateClient(LPWSAOVERLAPPED overlapped) {
+    std::string songlist;               //String of all songs
+    char music[BUF_SIZE];              //C-string of songs
+    DWORD result = 0;
+    DWORD sendBytes;
+    WSAEVENT events[1];
+    SocketInformation *si = (SocketInformation *)overlapped;
+    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
+    memset(si->buffer, 0, sizeof(si->buffer));
+    si->bytesReceived = 0;
+    si->bytesSent = 0;
+    si->dataBuf.len = BUF_SIZE;
+    si->dataBuf.buf = si->buffer;
+    // Build the song list
+    QStringList songs = ServerWindow::getSongs();
+    for (auto song : songs)
+    {
+        songlist += song.toStdString() + "\n";
+    }
+    strcpy(music, songlist.c_str());
+
+    WSASend(si->socket, &(si->dataBuf), 1, &sendBytes, 0, &(si->overlapped), clientRoutine);
+
+    // Wait for the send to complete
+    events[0] = WSACreateEvent();
+    if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
+        fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
 }
 
 /*--------------------------------------------------------------------------------------
