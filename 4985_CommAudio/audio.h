@@ -16,6 +16,7 @@
 #define SAMPLERATE 44100
 #define SAMPLESIZE 16
 #define AUDIODATA 44
+#define OFFSET 100000
 
 bool audioPlaying();
 void resetPrevTrack();

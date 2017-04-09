@@ -21,11 +21,13 @@
 #include "audio.h"
 
 QAudioOutput *output;
-QBuffer *audioBuffer;
+QBuffer audioBuffer;
 QByteArray audioByteData;
 QString prevTrack;
 QString currTrack;
 QList<QByteArray> audioByteChunks;
+int currPos = OFFSET;
+int startPos = 0;
 
 /*--------------------------------------------------------------------------------------
 --  INTERFACE:     bool audioPlaying()
@@ -120,9 +122,10 @@ void initAudioOutput()
 ---------------------------------------------------------------------------------------*/
 void play(QString filePath)
 {
+    audioBuffer.close();
     currTrack = filePath; // set current track to what user selected
     loadAudioData(currTrack); // load raw data from wav file to a buffer
-    //loadAudioStream(); ** implement later **
+    loadAudioStream();
     playStream();
 }
 
@@ -145,7 +148,6 @@ void loadAudioData(QString filePath)
 {
     // create file handle for audio file
     QFile audioFile(filePath);
-
     // open audio file
     if (audioFile.open(QIODevice::ReadOnly))
     {   // check if user selected a different track
@@ -157,6 +159,7 @@ void loadAudioData(QString filePath)
 
             // extract raw audio data
             audioByteData = audioFile.readAll();
+            qDebug() << "size: " << audioByteData.size();
         }
     }
 }
@@ -177,7 +180,26 @@ void loadAudioData(QString filePath)
 ---------------------------------------------------------------------------------------*/
 void loadAudioStream()
 {
-    // ** implement later **
+    QByteArray tempData;
+    QByteArray tempData2;
+
+    int a = 0;
+    int b = 1000000;
+
+    if(!audioByteChunks.isEmpty())
+    {
+        audioByteChunks.clear();
+        qDebug() << "cleared";
+    }
+    for (int i = 0; i < 10; i++)
+    {
+        tempData = audioByteData.mid(a, b);
+        audioByteChunks.push_back(tempData);
+        tempData.clear();
+
+        a += b;
+    }
+
 }
 
 /*--------------------------------------------------------------------------------------
@@ -196,21 +218,28 @@ void loadAudioStream()
 ---------------------------------------------------------------------------------------*/
 void playStream()
 {
-    // initialize audio buffer
-    audioBuffer = new QBuffer(&audioByteData);
-    audioBuffer->open(QIODevice::ReadWrite);
-    audioBuffer->seek(0);
-    //qDebug() << audioBuffer->size();
-
-    output->start(audioBuffer); // play track
-
-    // event loop for tracck
-    QEventLoop loop;
-    QObject::connect(output, SIGNAL(stateChanged(QAudio::State)), &loop, SLOT(quit()));
-    do
+    for (int i = 0; i < 10; i++)
     {
-        loop.exec();
-    } while(output->state() == QAudio::ActiveState);
+        qDebug() << "start";
+        // initialize audio buffer
+        audioBuffer.setBuffer(&audioByteChunks[i]);
+        audioBuffer.open(QIODevice::ReadWrite);
+
+        output->start(&audioBuffer); // play track
+        // event loop for tracck
+        QEventLoop loop;
+        QObject::connect(output, SIGNAL(stateChanged(QAudio::State)), &loop, SLOT(quit()));
+        do
+        {
+            loop.exec();
+            if(audioBuffer.atEnd())
+            {
+               qDebug() << "end";
+
+               //output->reset();
+            }
+        } while(output->state() == QAudio::ActiveState);
+    }
 }
 
 /*--------------------------------------------------------------------------------------
@@ -234,6 +263,6 @@ void stopAudio()
     {
         output->stop(); // stop the audio
         output->reset();
-        audioBuffer->close();
+        audioBuffer.close();
     }
 }
