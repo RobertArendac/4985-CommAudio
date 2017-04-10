@@ -222,6 +222,9 @@ void ClientWindow::updateSongs(QStringList songs)
     {
         ui->songList->addItem(song);
     }
+
+    // set first item to be currently selected
+    ui->songList->setCurrentItem(ui->songList->item(0));
 }
 
 
