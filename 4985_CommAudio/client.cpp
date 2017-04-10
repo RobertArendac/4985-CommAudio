@@ -375,6 +375,7 @@ void downloadSong(const char *song)
     SocketInformation *si;
     WSAEVENT events[1];
     DWORD result, sendBytes, recvBytes, flags = 0;
+    char test[100];
 
     si = (SocketInformation *)malloc(sizeof(SocketInformation));
 
@@ -386,6 +387,10 @@ void downloadSong(const char *song)
     // Get the save location
     memset(filename, 0, sizeof(filename));
     strcpy(filename, QFileDialog::getSaveFileName(NULL, "Save Audio File", song, "(*.wav) (*.mp3)").toStdString().c_str());
+
+    // Check if user pressed cancel
+    if (filename[0] == '\0')
+        return;
 
     // Clear the file
     fp = fopen(filename, "w");
@@ -450,7 +455,7 @@ void downloadSong(const char *song)
 --
 --  RETURNS:       void
 --
---  DATE:         April 8, 2017
+--  DATE:          April 8, 2017
 --
 --  DESIGNER:      Robert Arendac
 --
@@ -478,6 +483,10 @@ void uploadSong(QString song)
     // Get the file location
     memset(filename, 0, sizeof(filename));
     strcpy(filename, song.toStdString().c_str());
+
+    // Check if user pressed cancel
+    if (filename[0] == '\0')
+        return;
 
     // Prepare upload request
     strcpy(si->buffer, "ul");
