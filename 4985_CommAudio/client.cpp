@@ -3,6 +3,8 @@
 #include <WS2tcpip.h>
 #include <QMessageBox>
 #include <QFileDialog>
+#include <QFile>
+#include <QFileInfo>
 
 ClientWindow *clientWind;
 
@@ -382,13 +384,14 @@ void downloadSong(const char *song)
     //memset(si->filename, 0, sizeof(si->filename));
 
     // Get the save location
+    memset(filename, 0, sizeof(filename));
     strcpy(filename, QFileDialog::getSaveFileName(NULL, "Save Audio File", song, "(*.wav) (*.mp3)").toStdString().c_str());
 
     // Clear the file
     fp = fopen(filename, "w");
     fclose(fp);
 
-    strcpy(si->buffer, song);
+    strcpy(si->buffer, "dl");
     si->bytesReceived = 0;
     si->bytesSent = 0;
     si->dataBuf.len = BUF_SIZE;
@@ -413,6 +416,22 @@ void downloadSong(const char *song)
     si->dataBuf.len = BUF_SIZE;
     si->dataBuf.buf = si->buffer;
 
+    // Sends the song name
+    WSASend(si->socket, &(si->dataBuf), 1, &sendBytes, 0, &(si->overlapped), sendRoutine);
+
+    if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
+        fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
+
+    ResetEvent(events[0]);
+
+    // Reset buffers in preparation to receive
+    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
+    memset(si->buffer, 0, sizeof(si->buffer));
+    si->bytesReceived = 0;
+    si->bytesSent = 0;
+    si->dataBuf.len = BUF_SIZE;
+    si->dataBuf.buf = si->buffer;
+
     // Receives song file
     WSARecv(si->socket, &(si->dataBuf), 1, &recvBytes, &flags, &(si->overlapped), downloadRoutine);
     if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
@@ -423,7 +442,163 @@ void downloadSong(const char *song)
     msg.exec();
 
     free(si);
+}
 
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void uploadSong(QString song)
+--                     QString song: Filepath of song to upload
+--
+--  RETURNS:       void
+--
+--  DATE:         April 8, 2017
+--
+--  DESIGNER:      Robert Arendac
+--
+--  PROGRAMMER:    RobertArendac
+--
+--  NOTES:
+--      Uploads a song to the server.  Will first send request type.  Then parses the song
+--      name and sends that.  Once server knows song name, client begins transferring file.
+---------------------------------------------------------------------------------------*/
+void uploadSong(QString song)
+{
+    FILE *fp;
+    SocketInformation *si;
+    WSAEVENT events[1];
+    DWORD result, sendBytes, recvBytes, flags = 0;
+    QFile f(song);
+    QFileInfo fi(f.fileName());
+
+    si = (SocketInformation *)malloc(sizeof(SocketInformation));
+
+    si->socket = cltSck;
+    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
+    memset(si->buffer, 0, sizeof(si->buffer));
+
+    // Get the file location
+    memset(filename, 0, sizeof(filename));
+    strcpy(filename, song.toStdString().c_str());
+
+    // Prepare upload request
+    strcpy(si->buffer, "ul");
+    si->bytesReceived = 0;
+    si->bytesSent = 0;
+    si->dataBuf.len = BUF_SIZE;
+    si->dataBuf.buf = si->buffer;
+
+    // Sends the request
+    WSASend(si->socket, &(si->dataBuf), 1, &sendBytes, 0, &(si->overlapped), sendRoutine);
+
+    // Wait for the send to complete
+    events[0] = WSACreateEvent();
+    if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
+        fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
+
+    ResetEvent(events[0]);
+
+    // Reset buffers in preparation to send song name
+    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
+    memset(si->buffer, 0, sizeof(si->buffer));
+    strcpy(si->buffer, fi.fileName().toStdString().c_str());
+    si->bytesReceived = 0;
+    si->bytesSent = 0;
+    si->dataBuf.len = BUF_SIZE;
+    si->dataBuf.buf = si->buffer;
+
+    // Sends the song name
+    WSASend(si->socket, &(si->dataBuf), 1, &sendBytes, 0, &(si->overlapped), sendRoutine);
+
+    if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
+        fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
+
+    ResetEvent(events[0]);
+
+    // Reset buffers in preparation to upload song
+    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
+    memset(si->buffer, 0, sizeof(si->buffer));
+    si->bytesReceived = 0;
+    si->bytesSent = 0;
+    si->dataBuf.len = BUF_SIZE;
+    si->dataBuf.buf = si->buffer;
+
+    int sz;
+    fp = fopen(filename, "r+b");
+    fseek(fp, 0, SEEK_END);
+    sz = ftell(fp); // Size of the file
+    rewind(fp);
+    int loops;
+
+    // Calculate how many loops are needed and size of last packet
+    loops = sz / BUF_SIZE + (sz % BUF_SIZE != 0);
+    int lastSend = sz - ((loops - 1) * BUF_SIZE);
+
+    for (int i = 0; i < loops; i++)
+    {
+        ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
+        memset(si->buffer, 0, sizeof(si->buffer));
+        si->bytesReceived = 0;
+        si->bytesSent = 0;
+
+        // Last iteration, read smaller packet
+        if (i == loops - 1)
+        {
+            fread(si->buffer, 1, lastSend, fp);
+            si->dataBuf.len = lastSend;
+            si->dataBuf.buf = si->buffer;
+        }
+        else
+        {
+            fread(si->buffer, 1, BUF_SIZE, fp);
+            si->dataBuf.len = BUF_SIZE;
+            si->dataBuf.buf = si->buffer;
+        }
+
+        // Send packet
+        WSASend(si->socket, &(si->dataBuf), 1, &sendBytes, 0, &(si->overlapped), clientRoutine);
+
+        // Wait for the send to complete
+        if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
+            fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
+
+        ResetEvent(events[0]);
+    }
+
+    fclose(fp);
+
+    /* Send a packet that designates the file transfer is complete */
+
+    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
+    memset(si->buffer, 0, sizeof(si->buffer));
+
+    sprintf(si->buffer, "%s", "COMPLETE");
+
+    si->dataBuf.buf = si->buffer;
+    si->dataBuf.len = BUF_SIZE;
+
+    WSASend(si->socket, &(si->dataBuf), 1, &sendBytes, 0, &(si->overlapped), clientRoutine);
+
+    // Wait for the send to complete
+    if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
+        fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
+
+    ResetEvent(events[0]);
+
+    // Reset buffers to receive updated song list
+    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
+    memset(si->buffer, 0, sizeof(si->buffer));
+    si->bytesReceived = 0;
+    si->bytesSent = 0;
+    si->dataBuf.len = BUF_SIZE;
+    si->dataBuf.buf = si->buffer;
+
+    // Receive data, will be the song list
+    WSARecv(si->socket, &(si->dataBuf), 1, &recvBytes, &flags, &(si->overlapped), songRoutine);
+
+    //Wait for receive to complete
+    if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
+        fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
+
+    free(si);
 }
 
 /*--------------------------------------------------------------------------------------

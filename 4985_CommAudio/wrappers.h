@@ -12,7 +12,7 @@
 #define MCAST_PORT  8910
 #define MCAST_TTL   32  //Kind of an arbitrary setting, I don't know what's best here...
 
-#define BUF_SIZE 1024   //size of the buffer parameter for socketInformation
+#define BUF_SIZE 2048   //size of the buffer parameter for socketInformation
 #define SONG_SIZE 1024
 #define IP_SIZE 16
 

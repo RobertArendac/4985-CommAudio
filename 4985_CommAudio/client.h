@@ -11,6 +11,7 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port);
 void requestSong(const char *song);
 void updateClientSongs();
 void downloadSong(const char *song);
+void uploadSong(QString song);
 void CALLBACK songRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
 void CALLBACK pickRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
 void CALLBACK downloadRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
