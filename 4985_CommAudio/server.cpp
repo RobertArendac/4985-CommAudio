@@ -386,8 +386,6 @@ void runUDPServer(ServerWindow *sw, int port)
 
     cltDest = clientCreateAddress(MCAST_ADDR, MCAST_PORT);
 
-    sw->updateServerStatus("Status: ON");
-
     //Allocate socket information
     si = (SocketInformation *)malloc(sizeof(SocketInformation));
 
