@@ -444,6 +444,22 @@ void downloadSong(const char *song)
     free(si);
 }
 
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void uploadSong(QString song)
+--                     QString song: Filepath of song to upload
+--
+--  RETURNS:       void
+--
+--  DATE:         April 8, 2017
+--
+--  DESIGNER:      Robert Arendac
+--
+--  PROGRAMMER:    RobertArendac
+--
+--  NOTES:
+--      Uploads a song to the server.  Will first send request type.  Then parses the song
+--      name and sends that.  Once server knows song name, client begins transferring file.
+---------------------------------------------------------------------------------------*/
 void uploadSong(QString song)
 {
     FILE *fp;
@@ -463,6 +479,7 @@ void uploadSong(QString song)
     memset(filename, 0, sizeof(filename));
     strcpy(filename, song.toStdString().c_str());
 
+    // Prepare upload request
     strcpy(si->buffer, "ul");
     si->bytesReceived = 0;
     si->bytesSent = 0;
@@ -479,7 +496,7 @@ void uploadSong(QString song)
 
     ResetEvent(events[0]);
 
-    // Reset buffers in preparation to receive
+    // Reset buffers in preparation to send song name
     ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
     memset(si->buffer, 0, sizeof(si->buffer));
     strcpy(si->buffer, fi.fileName().toStdString().c_str());
@@ -522,6 +539,7 @@ void uploadSong(QString song)
         si->bytesReceived = 0;
         si->bytesSent = 0;
 
+        // Last iteration, read smaller packet
         if (i == loops - 1)
         {
             fread(si->buffer, 1, lastSend, fp);
@@ -531,11 +549,11 @@ void uploadSong(QString song)
         else
         {
             fread(si->buffer, 1, BUF_SIZE, fp);
-
             si->dataBuf.len = BUF_SIZE;
             si->dataBuf.buf = si->buffer;
         }
 
+        // Send packet
         WSASend(si->socket, &(si->dataBuf), 1, &sendBytes, 0, &(si->overlapped), clientRoutine);
 
         // Wait for the send to complete
@@ -565,6 +583,7 @@ void uploadSong(QString song)
 
     ResetEvent(events[0]);
 
+    // Reset buffers to receive updated song list
     ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
     memset(si->buffer, 0, sizeof(si->buffer));
     si->bytesReceived = 0;

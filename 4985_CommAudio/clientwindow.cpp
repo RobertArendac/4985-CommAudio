@@ -92,6 +92,20 @@ void ClientWindow::on_cltUpdateButton_clicked()
     updateClientSongs();
 }
 
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void ClientWindow::on_cltUploadButton_clicked()
+--
+--  RETURNS:       void
+--
+--  DATE:          April 8, 2017
+--
+--  DESIGNER:      Robert Arendac
+--
+--  PROGRAMMER:    Robert Arendac
+--
+--  NOTES:
+--      Requests an upload to the server and begins transferring a new song.
+---------------------------------------------------------------------------------------*/
 void ClientWindow::on_cltUploadButton_clicked()
 {
     uploadSong(QFileDialog::getOpenFileName());
@@ -133,8 +147,7 @@ void ClientWindow::on_cltPlaySelectedTrackButton_clicked()
 --  PROGRAMMER:    RobertArendac
 --
 --  NOTES:
---      Downloads selected song.  Currently hard coded, CHANGE WHEN REQUEST STATES
---      ARE COMPLETED!!!
+--      Downloads selected song.  NOTE: Must have a song selected
 ---------------------------------------------------------------------------------------*/
 void ClientWindow::on_cltDownloadSelectedTrackButton_clicked()
 {
