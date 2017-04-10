@@ -375,7 +375,6 @@ void downloadSong(const char *song)
     SocketInformation *si;
     WSAEVENT events[1];
     DWORD result, sendBytes, recvBytes, flags = 0;
-    char test[100];
 
     si = (SocketInformation *)malloc(sizeof(SocketInformation));
 
