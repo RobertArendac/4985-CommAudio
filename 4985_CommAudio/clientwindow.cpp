@@ -19,6 +19,8 @@
 #include "ui_clientwindow.h"
 #include "client.h"
 #include "wrappers.h"
+#include <QFile>
+#include <QFileDialog>
 
 ClientWindow::ClientWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -92,7 +94,7 @@ void ClientWindow::on_cltUpdateButton_clicked()
 
 void ClientWindow::on_cltUploadButton_clicked()
 {
-
+    uploadSong(QFileDialog::getOpenFileName());
 }
 
 /*--------------------------------------------------------------------------------------
