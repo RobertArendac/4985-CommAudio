@@ -211,7 +211,7 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port)
 
     //Testing UDP works, use as template for actually doing something useful
     /*
-    WSASendTo(si->socket, &(si->dataBuf), 1, &sendBytes, 0, (SOCKADDR *)&addr, sizeof(SOCKADDR_IN), &(si->overlapped), clientRoutine);
+    WSASendTo(si->socket, &(si->dataBuf), 1, NULL, 0, (SOCKADDR *)&addr, sizeof(SOCKADDR_IN), &(si->overlapped), clientRoutine);
 
     //Wait for receive to complete
     events[0] = WSACreateEvent();
@@ -249,7 +249,7 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port)
 void requestSong(const char *song) {
     SocketInformation *si;
     WSAEVENT events[1];
-    DWORD result, sendBytes = 0;
+    DWORD result;
 
     si = (SocketInformation *)malloc(sizeof(SocketInformation));
 
@@ -264,7 +264,7 @@ void requestSong(const char *song) {
     si->dataBuf.buf = si->buffer;
 
     // Send the request type;
-    WSASend(si->socket, &(si->dataBuf), 1, &sendBytes, 0, &(si->overlapped), pickRoutine);
+    WSASend(si->socket, &(si->dataBuf), 1, NULL, 0, &(si->overlapped), pickRoutine);
 
     // Wait for the send to complete
     events[0] = WSACreateEvent();
@@ -284,7 +284,7 @@ void requestSong(const char *song) {
     si->dataBuf.buf = si->buffer;
 
     //send in song name
-    WSASend(si->socket, &(si->dataBuf), 1, &sendBytes, 0, &(si->overlapped), pickRoutine);
+    WSASend(si->socket, &(si->dataBuf), 1, NULL, 0, &(si->overlapped), pickRoutine);
 
     // Wait for the send to complete
     if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
