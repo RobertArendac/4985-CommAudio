@@ -13,6 +13,7 @@
 #include <QEventLoop>
 #include "wrappers.h"
 
+void sendAudio(const char *data);
 void playAudio(QString filePath);
 void pauseAudio();
 void runTCPServer(ServerWindow *sw, int port);

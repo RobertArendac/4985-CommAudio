@@ -117,6 +117,7 @@ void runTCPClient(ClientWindow *cw, const char *ip, int port)
     if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
         fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
 
+
     free(si);
     cw->updateClientStatus("Status: Connected");
 
@@ -157,7 +158,7 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port)
     struct ip_mreq stMreq;      //Struct for multicasting
     int flag = 1;               //True flag
     SocketInformation *si;
-    DWORD sendBytes, result;
+    DWORD sendBytes, recvBytes, result, flags = 0;
     WSAEVENT events[1];         //Event array
 
     // Create a UDP socket
@@ -186,7 +187,7 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port)
     }
 
     memset((char *)&srvAddr, 0, sizeof(SOCKADDR_IN));
-    srvAddr = serverCreateAddress(MCAST_PORT);
+    srvAddr = serverCreateAddress(port);
 
     // Bind to multicast group
     if (!bindSocket(sck, &srvAddr))
@@ -212,31 +213,62 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port)
     //Fill in the socket info
     si->socket = sck;
     ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
-    memset(si->buffer, 0, sizeof(si->buffer));
+    memset(si->audioBuffer, 0, sizeof(si->audioBuffer));
     si->bytesReceived = 0;
     si->bytesSent = 0;
-    si->dataBuf.len = BUF_SIZE;
-    si->dataBuf.buf = si->buffer;
+    si->dataBuf.len = OFFSET;
+    si->dataBuf.buf = si->audioBuffer;
 
     //Testing UDP works, use as template for actually doing something useful
-    /*
-    WSASendTo(si->socket, &(si->dataBuf), 1, &sendBytes, 0, (SOCKADDR *)&addr, sizeof(SOCKADDR_IN), &(si->overlapped), clientRoutine);
+
+    //WSASendTo(si->socket, &(si->dataBuf), 1, &sendBytes, 0, (SOCKADDR *)&addr, sizeof(SOCKADDR_IN), &(si->overlapped), clientRoutine);
 
     //Wait for receive to complete
-    events[0] = WSACreateEvent();
+    /**events[0] = WSACreateEvent();
     if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
         fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
-
     */
+
 
     /* This is here because we do not have a graceful shutdown.  We will need to design all sockets
      * being closed and all TCP and UDP functions ending before performing any sort of cleanup.
      */
-    while (1);
+    while (1)
+    {
+        if(WSARecvFrom(si->socket, &(si->dataBuf), 1, NULL, &flags, NULL, NULL, &(si->overlapped), newRoutine) != 0)
+        {
+            qDebug() << WSAGetLastError();
+        }
+        else
+        {
+            qDebug () << "no error";
+        }
+
+        //Wait for receive to complete
+        events[0] = WSACreateEvent();
+
+        if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
+        {
+            qDebug() <<"WaitForMultipleEvents() failed " << WSAGetLastError();
+        }
+
+            qDebug() << si->dataBuf.buf << endl;
+
+    }
 
     printf("closing socket\n");
     closesocket(sck);
     WSACleanup();
+}
+
+void CALLBACK newRoutine(DWORD error, DWORD bytesTransferred, LPOVERLAPPED overlapped, DWORD flags)
+{
+    if (error)
+    {
+        qDebug() << error;
+    }
+
+    qDebug() << bytesTransferred;
 }
 
 /*--------------------------------------------------------------------------------------

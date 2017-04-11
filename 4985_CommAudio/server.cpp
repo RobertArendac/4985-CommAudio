@@ -1,5 +1,6 @@
 #include "server.h"
 #include "client.h"
+#include "audio.h"
 #include <map>
 #include <QDebug>
 #include <WS2tcpip.h>
@@ -7,6 +8,38 @@
 std::map<SOCKET, std::string> clientMap;
 char filepath[SONG_SIZE];
 ServerWindow *servWin;
+SOCKADDR_IN cltDest;
+SOCKET audioSock;
+
+void sendAudio(const char *data)
+{
+    SocketInformation *si;  //Struct holding socket info
+    WSAEVENT events[1];         //Event array
+    //Allocate socket information
+    si = (SocketInformation *)malloc(sizeof(SocketInformation));
+    DWORD result;
+
+    memset(si->audioBuffer, 0, sizeof(si->audioBuffer));
+    strcpy(si->audioBuffer, data);
+    si->socket = audioSock;
+    si->bytesReceived = 0;
+    si->bytesSent = 0;
+    si->dataBuf.len = OFFSET;
+    si->dataBuf.buf = si->audioBuffer;
+
+    WSASendTo(si->socket, &(si->dataBuf), 1, NULL, 0, (SOCKADDR *)&cltDest, sizeof(SOCKADDR_IN), &(si->overlapped), clientRoutine);
+
+    events[0] = WSACreateEvent();
+
+    if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
+    {
+        qDebug() <<"WaitForMultipleEvents() failed " << WSAGetLastError();
+    }
+    else
+    {
+        qDebug() << "sent " << si->audioBuffer;
+    }
+}
 
 /*--------------------------------------------------------------------------------------
 --  INTERFACE:     SOCKADDR_IN serverCreateAddress(int port)
@@ -334,7 +367,7 @@ void selectSong(SocketInformation *si)
 ---------------------------------------------------------------------------------------*/
 void runUDPServer(ServerWindow *sw, int port)
 {
-    SOCKADDR_IN addr, cltDest;  //Addresses to receive from and send to
+    SOCKADDR_IN addr;  //Addresses to receive from and send to
     SOCKET acceptSocket;        //Connect to send/receive on
     struct ip_mreq stMreq;      //Struct for multicasting
     u_long ttl = MCAST_TTL;     //Time to live
@@ -390,6 +423,7 @@ void runUDPServer(ServerWindow *sw, int port)
 
     //Fill in the socket info
     si->socket = acceptSocket;
+    audioSock = acceptSocket;
     ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
     memset(si->buffer, 0, sizeof(si->buffer));
     si->bytesReceived = 0;
@@ -397,11 +431,15 @@ void runUDPServer(ServerWindow *sw, int port)
     si->dataBuf.len = BUF_SIZE;
     si->dataBuf.buf = si->buffer;
 
-    while (1)
+    while(1)
     {
+        /**
         //Testing UDP works, use as template for actually doing something useful
-        /*
-        WSARecvFrom(si->socket, &(si->dataBuf), 1, &recvBytes, &flags, NULL, NULL, &(si->overlapped), newRoutine);
+
+        if(WSARecvFrom(si->socket, &(si->dataBuf), 1, &recvBytes, &flags, NULL, NULL, &(si->overlapped), clientRoutine) != 997)
+        {
+            qDebug() << WSAGetLastError();
+        }
 
         //Wait for receive to complete
         events[0] = WSACreateEvent();
@@ -409,8 +447,7 @@ void runUDPServer(ServerWindow *sw, int port)
             fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
 
         qDebug() << si->dataBuf.buf << endl;
-        */
-
+    */
     }
 }
 

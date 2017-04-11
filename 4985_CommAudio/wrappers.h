@@ -7,6 +7,7 @@
 #include <Windows.h>
 #include "serverwindow.h"
 #include "clientwindow.h"
+#include "audio.h"
 
 #define MCAST_ADDR  "234.5.6.7"
 #define MCAST_PORT  8910
@@ -28,6 +29,7 @@ typedef struct {
 typedef struct SocketInformation {
     OVERLAPPED overlapped;
     char buffer[BUF_SIZE];
+    char audioBuffer[OFFSET];
     //char filename[BUF_SIZE];
     WSABUF dataBuf;
     SOCKET socket;

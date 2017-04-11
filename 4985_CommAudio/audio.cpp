@@ -19,6 +19,8 @@
 ---------------------------------------------------------------------------------------*/
 
 #include "audio.h"
+#include "server.h"
+#include <thread>
 
 QAudioOutput *output;
 QBuffer audioBuffer;
