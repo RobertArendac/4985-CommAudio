@@ -340,7 +340,7 @@ void runUDPServer(ServerWindow *sw, int port)
     u_long ttl = MCAST_TTL;     //Time to live
     int flag = 0;               //False flag
     SocketInformation *si;
-    DWORD recvBytes, result, flags = 0;
+    DWORD result, flags = 0;
     WSAEVENT events[1];
 
     // Init address info
