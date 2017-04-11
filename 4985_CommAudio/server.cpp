@@ -367,109 +367,64 @@ void selectSong(SocketInformation *si)
 ---------------------------------------------------------------------------------------*/
 void runUDPServer(ServerWindow *sw, int port)
 {
-    SOCKADDR_IN addr;  //Addresses to receive from and send to
-    SOCKET acceptSocket;        //Connect to send/receive on
-    struct ip_mreq stMreq;      //Struct for multicasting
-    u_long ttl = MCAST_TTL;     //Time to live
-    int flag = 1;               //False flag
-    SocketInformation *si;
+    SOCKADDR_IN addr, destAddr;
+    SOCKET udpSck;
+    int flag = 0;
+    struct ip_mreq stMreq;
+    u_long ttl = MCAST_TTL;
 
-    // Init address info
-    memset((char *)&addr, 0, sizeof(SOCKADDR_IN));
-    addr = clientCreateAddress(MCAST_ADDR, MCAST_PORT);
-    multiDest = addr;
-
-    // Create a socket for incomming data
-    if ((acceptSocket = createSocket(SOCK_DGRAM, IPPROTO_UDP)) == NULL)
+    if ((udpSck = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET)
     {
-        sw->updateServerStatus("Status: Socket Error");
+        qDebug() << "failed to create socket " << WSAGetLastError();
         return;
     }
 
-    qDebug() << "Socket Created";
+    addr.sin_family      = AF_INET;
+    addr.sin_addr.s_addr = htonl(INADDR_ANY); /* any interface */
+    addr.sin_port        = 0;                 /* any port */
 
-    // Set the reuse addr
-    if (!setCltOptions(acceptSocket, SO_REUSEADDR, (char *)&flag))
+    if (bind(udpSck, (struct sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR)
     {
-        sw->updateServerStatus("Status: Socket Error");
+        qDebug() << "Bind failed: " << WSAGetLastError();
         return;
     }
 
-    qDebug() << "Socket Option REUSEADDR";
-
-
-    // bind the socket
-    if (!bindSocket(acceptSocket, &addr))
-    {
-        sw->updateServerStatus("Status: Socket Error");
-        return;
-    }
-
-    qDebug() << "Socket Bind";
-
-    // Multicast interface
     stMreq.imr_multiaddr.s_addr = inet_addr(MCAST_ADDR);
     stMreq.imr_interface.s_addr = INADDR_ANY;
 
-    if (!setServOptions(acceptSocket, IP_MULTICAST_TTL, (char *)&ttl))
+    if (setsockopt(udpSck, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&stMreq, sizeof(stMreq)) == SOCKET_ERROR)
     {
-        sw->updateServerStatus("Status: Socket Error");
+        qDebug() << "setsockopt failed: " << WSAGetLastError();
         return;
     }
 
-    qDebug() << "Socket Option IP_MULTICAST_TTL";
-
-    flag = 0;
-    if (!setServOptions(acceptSocket, IP_MULTICAST_LOOP, (char *)&flag))
+    if (setsockopt(udpSck, IPPROTO_IP, IP_MULTICAST_TTL, (char *)&ttl, sizeof(ttl)) == SOCKET_ERROR)
     {
-        sw->updateServerStatus("Status: Socket Error");
+        qDebug() << "setsockopt failed: " << WSAGetLastError();
         return;
     }
 
-    qDebug() << "Socket Option IP_MULTICAST_LOOP";
-
-
-    // Join multicast group, specify time-to-live, and disable loop
-    if (!setServOptions(acceptSocket, IP_ADD_MEMBERSHIP, (char *)&stMreq))
+    if (setsockopt(udpSck, IPPROTO_IP, IP_MULTICAST_LOOP, (char *)&flag, sizeof(flag)) == SOCKET_ERROR)
     {
-        sw->updateServerStatus("Status: Socket Error");
+        qDebug() << "setsockopt failed: " << WSAGetLastError();
         return;
     }
 
-    qDebug() << "Socket Option IP_ADD_MEMBERSHIP";
+    destAddr.sin_family      = AF_INET;
+    destAddr.sin_addr.s_addr = inet_addr(MCAST_ADDR); /* any interface */
+    destAddr.sin_port        = htons(MCAST_PORT);                 /* any port */
 
-    //Allocate socket information
-    si = (SocketInformation *)malloc(sizeof(SocketInformation));
-
-    //Fill in the socket info
-    si->socket = acceptSocket;
-    audioSock = acceptSocket;
-    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
-    memset(si->audioBuffer, 0, sizeof(si->audioBuffer));
-    si->bytesReceived = 0;
-    si->bytesSent = 0;
-    si->dataBuf.len = OFFSET;
-    si->dataBuf.buf = si->audioBuffer;
-
-    while(1);
-
-        /**
-        //Testing UDP works, use as template for actually doing something useful
-
-        if(WSARecvFrom(si->socket, &(si->dataBuf), 1, &recvBytes, &flags, NULL, NULL, &(si->overlapped), clientRoutine) != 997)
+    qDebug() << "About to send data";
+    while (1)
+    {
+        if (sendto(udpSck, "test", 5, 0, (struct sockaddr*)&destAddr, sizeof(destAddr)) < 0)
         {
-            qDebug() << WSAGetLastError();
+            qDebug() << "sendto failed: " << WSAGetLastError();
         }
-
-        //Wait for receive to complete
-        events[0] = WSACreateEvent();
-        if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
-            fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
-
-        qDebug() << si->dataBuf.buf << endl;
-    */
-
+    }
 }
+
+
 
 /*--------------------------------------------------------------------------------------
 --  INTERFACE:     void downloadFromClient(SocketInformation *si)

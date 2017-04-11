@@ -153,133 +153,51 @@ void runTCPClient(ClientWindow *cw, const char *ip, int port)
 ---------------------------------------------------------------------------------------*/
 void runUDPClient(ClientWindow *cw, const char *ip, int port)
 {
-    SOCKET sck;                 //Socket to send/receive on
-    SOCKADDR_IN addr;  //Addresses for sending/receiving
-    struct ip_mreq stMreq;      //Struct for multicasting
-    int flag = 1;               //True flag
-    SocketInformation *si;
-    u_long ttl = MCAST_TTL;     //Time to live
-    DWORD sendBytes, recvBytes, result, flags = 0;
-    WSAEVENT events[1];         //Event array
+    SOCKADDR_IN addr;
+    SOCKET udpSck;
+    struct ip_mreq stMreq;
+    int flag = 1;
+    char recvBuff[100];
 
-    // Init address info
-    memset((char *)&addr, 0, sizeof(SOCKADDR_IN));
-    addr = clientCreateAddress(MCAST_ADDR, MCAST_PORT);
-
-    // Create a UDP socket
-    if ((sck = createSocket(SOCK_DGRAM, IPPROTO_UDP)) == NULL)
+    if ((udpSck = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET)
     {
-        cw->updateClientStatus("Status: Socket Error");
+        qDebug() << "failed to create socket " << WSAGetLastError();
         return;
     }
 
-    qDebug() << "Socket created";
-
-    // Set the reuse addr
-    if (!setCltOptions(sck, SO_REUSEADDR, (char *)&flag))
+    if (setsockopt(udpSck, SOL_SOCKET, SO_REUSEADDR, (char *)&flag, sizeof(flag)) == SOCKET_ERROR)
     {
-        cw->updateClientStatus("Status: Socket Error");
+        qDebug() << "setsockopt failed SO_REUSEADDR: " << WSAGetLastError();
         return;
     }
 
-    qDebug() << "Options Set";
+    addr.sin_family      = AF_INET;
+    addr.sin_addr.s_addr = htonl(INADDR_ANY); /* any interface */
+    addr.sin_port        = htons(MCAST_PORT);                 /* any port */
 
-    // Bind to multicast group
-    if (!bindSocket(sck, &addr))
+    if (bind(udpSck, (struct sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR)
     {
-        cw->updateClientStatus("Status: Socket Error");
+        qDebug() << "Bind failed: " << WSAGetLastError();
         return;
     }
 
-    qDebug() << "Socket Bind";
-
-    // Setup multicast interface
     stMreq.imr_multiaddr.s_addr = inet_addr(MCAST_ADDR);
     stMreq.imr_interface.s_addr = INADDR_ANY;
 
-    if (!setServOptions(sck, IP_MULTICAST_TTL, (char *)&ttl))
+    if (setsockopt(udpSck, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&stMreq, sizeof(stMreq)) == SOCKET_ERROR)
     {
-        cw->updateClientStatus("Status: Socket Error");
+        qDebug() << "setsockopt failed IP_ADD_MEMBERSHIP: " << WSAGetLastError();
         return;
     }
-
-    qDebug() << "Socket Option IP_MULTICAST_TTL";
-
-    flag = 0;
-    if (!setServOptions(sck, IP_MULTICAST_LOOP, (char *)&flag))
-    {
-        cw->updateClientStatus("Status: Socket Error");
-        return;
-    }
-
-    qDebug() << "Socket Option IP_MULTICAST_LOOP";
-
-
-    // Join multicast group, specify time-to-live, and disable loop
-    if (!setServOptions(sck, IP_ADD_MEMBERSHIP, (char *)&stMreq))
-    {
-        cw->updateClientStatus("Status: Socket Error");
-        return;
-    }
-
-    qDebug() << "Socket Option IP_ADD_MEMBERSHIP";
-
-    //Allocate socket information
-    si = (SocketInformation *)malloc(sizeof(SocketInformation));
-
-    //Fill in the socket info
-    si->socket = sck;
-    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
-    memset(si->audioBuffer, 0, sizeof(si->audioBuffer));
-    si->bytesReceived = 0;
-    si->bytesSent = 0;
-    si->dataBuf.len = OFFSET;
-    si->dataBuf.buf = si->audioBuffer;
-
-    //Testing UDP works, use as template for actually doing something useful
-
-    //WSASendTo(si->socket, &(si->dataBuf), 1, &sendBytes, 0, (SOCKADDR *)&addr, sizeof(SOCKADDR_IN), &(si->overlapped), clientRoutine);
-
-    //Wait for receive to complete
-    /**events[0] = WSACreateEvent();
-    if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
-        fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
-    */
-
-
-    /* This is here because we do not have a graceful shutdown.  We will need to design all sockets
-     * being closed and all TCP and UDP functions ending before performing any sort of cleanup.
-     */
-
-    qDebug() << "Ready to Receive";
 
     while (1)
     {
-        if(WSARecvFrom(si->socket, &(si->dataBuf), 1, NULL, &flags, NULL, NULL, &(si->overlapped), newRoutine) != 0)
-        {
-            qDebug() << WSAGetLastError();
-        }
-        else
-        {
-            qDebug () << "no error";
-        }
+        int addrSize = sizeof(struct sockaddr_in);
+        recvfrom(udpSck, recvBuff, 100, 0, (struct sockaddr*)&addr, &addrSize);
 
-        //Wait for receive to complete
-        events[0] = WSACreateEvent();
-
-        if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
-        {
-            qDebug() <<"WaitForMultipleEvents() failed " << WSAGetLastError();
-        }
-
-
-        qDebug() << si->dataBuf.buf << endl;
-
+        qDebug() << recvBuff;
+        memset(recvBuff, 0, 100);
     }
-
-    printf("closing socket\n");
-    closesocket(sck);
-    WSACleanup();
 }
 
 void CALLBACK newRoutine(DWORD error, DWORD bytesTransferred, LPOVERLAPPED overlapped, DWORD flags)
