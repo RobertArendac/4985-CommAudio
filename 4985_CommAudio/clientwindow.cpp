@@ -105,7 +105,7 @@ void ClientWindow::on_cltUpdateButton_clicked()
 ---------------------------------------------------------------------------------------*/
 void ClientWindow::on_cltUploadButton_clicked()
 {
-    uploadSong(QFileDialog::getOpenFileName());
+    uploadSong(QFileDialog::getOpenFileName(this,"Select File",qApp->applicationDirPath(),"Songs (*.wav *.mp3)"));
 }
 
 /*--------------------------------------------------------------------------------------
@@ -246,7 +246,7 @@ void ClientWindow::keyPressEvent(QKeyEvent* e)
     {
         if(e->key() == Qt::Key_K)
         {
-            printf("K was pressed\n"); // temp for testing
+            ui->cltMicLabel->setText("Status: On");
         }
     }
 }
@@ -272,7 +272,7 @@ void ClientWindow::keyReleaseEvent(QKeyEvent* e)
     {
         if(e->key() == Qt::Key_K)
         {
-            printf("K was released\n"); // temp for testing
+            ui->cltMicLabel->setText("Status: Off");
         }
     }
 }
