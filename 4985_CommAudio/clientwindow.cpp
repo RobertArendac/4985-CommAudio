@@ -19,6 +19,8 @@
 #include "ui_clientwindow.h"
 #include "client.h"
 #include "wrappers.h"
+#include <QFile>
+#include <QFileDialog>
 
 ClientWindow::ClientWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -71,18 +73,65 @@ void ClientWindow::on_cltSelectAllButton_clicked()
 
 }
 
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void ClientWindow::on_cltUpdateButton_clicked()
+--
+--  RETURNS:       void
+--
+--  DATE:          April 4, 2017
+--
+--  DESIGNER:      Matt Goerwell
+--
+--  PROGRAMMER:    Matt Goerwell
+--
+--  NOTES:
+--      Requests an update to the song list from the server.
+---------------------------------------------------------------------------------------*/
 void ClientWindow::on_cltUpdateButton_clicked()
 {
-
+    updateClientSongs();
 }
 
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void ClientWindow::on_cltUploadButton_clicked()
+--
+--  RETURNS:       void
+--
+--  DATE:          April 8, 2017
+--
+--  DESIGNER:      Robert Arendac
+--
+--  PROGRAMMER:    Robert Arendac
+--
+--  NOTES:
+--      Requests an upload to the server and begins transferring a new song.
+---------------------------------------------------------------------------------------*/
 void ClientWindow::on_cltUploadButton_clicked()
 {
-
+    uploadSong(QFileDialog::getOpenFileName());
 }
 
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void ClientWindow::on_cltPlaySelectedTrackButton_clicked()
+--
+--  RETURNS:       void
+--
+--  DATE:          April 4, 2017
+--
+--  DESIGNER:      Matt Goerwell
+--
+--  PROGRAMMER:    Matt Goerwell
+--
+--  NOTES:
+--      Requests that a specific song be played by the server.
+---------------------------------------------------------------------------------------*/
 void ClientWindow::on_cltPlaySelectedTrackButton_clicked()
 {
+    if (ui->songList->currentItem() != NULL )
+    {
+        const QString& song = ui->songList->currentItem()->text();
+        requestSong(song.toStdString().c_str());
+    }
 
 }
 
@@ -98,12 +147,11 @@ void ClientWindow::on_cltPlaySelectedTrackButton_clicked()
 --  PROGRAMMER:    RobertArendac
 --
 --  NOTES:
---      Downloads selected song.  Currently hard coded, CHANGE WHEN REQUEST STATES
---      ARE COMPLETED!!!
+--      Downloads selected song.  NOTE: Must have a song selected
 ---------------------------------------------------------------------------------------*/
 void ClientWindow::on_cltDownloadSelectedTrackButton_clicked()
 {
-    downloadSong("Queen - I Want to Break Free.mp3");
+    downloadSong(ui->songList->currentItem()->text().toStdString().c_str());
 }
 
 /*--------------------------------------------------------------------------------------
@@ -169,10 +217,14 @@ DWORD WINAPI ClientWindow::udpClientThread(void *arg) {
 ---------------------------------------------------------------------------------------*/
 void ClientWindow::updateSongs(QStringList songs)
 {
+    ui->songList->clear();
     for (auto song : songs)
     {
         ui->songList->addItem(song);
     }
+
+    // set first item to be currently selected
+    ui->songList->setCurrentItem(ui->songList->item(0));
 }
 
 

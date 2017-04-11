@@ -393,6 +393,7 @@ QStringList ServerWindow::getSongs()
 ---------------------------------------------------------------------------------------*/
 void ServerWindow::createSongList()
 {
+    ui->musicList->clear();
     QStringList list = getSongs();
     for (auto song : list)
     {
