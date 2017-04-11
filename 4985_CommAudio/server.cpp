@@ -662,7 +662,8 @@ void CALLBACK srvDownloadRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERL
 --  NOTES:
 --      Removes a client from the server's list of clients.
 ---------------------------------------------------------------------------------------*/
-void removeClient(SOCKET socket) {
+void removeClient(SOCKET socket)
+{
     qDebug() << "Closing socket: " << (int)socket;
     const char *client = clientMap.find(socket)->second.c_str();
     servWin->removeClient(client);
