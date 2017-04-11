@@ -252,7 +252,7 @@ void CALLBACK parseRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
         {
             fprintf(stderr, "Error: %d\n", error);
         }
-        removeClient(si->socket);
+        removeSocket(si->socket);
         return;
     }
     if (strcmp("pick", si->buffer) == 0)
@@ -489,7 +489,7 @@ void downloadFromClient(SocketInformation *si)
 }
 
 /*--------------------------------------------------------------------------------------
---  INTERFACE:     void uploadFromClient(SocketInformation *si)
+--  INTERFACE:     void uploadToClient(SocketInformation *si)
 --                     SocketInformation *si: Pointer to struct containing socket info
 --
 --  RETURNS:       void
@@ -648,7 +648,7 @@ void CALLBACK srvDownloadRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERL
 }
 
 /*--------------------------------------------------------------------------------------
---  INTERFACE:     void removeClient(SOCKET socket)
+--  INTERFACE:     void removeSocket(SOCKET socket)
 --                     SOCKET socket: the socket(client) that is being removed.
 --
 --  RETURNS:       void
@@ -660,9 +660,9 @@ void CALLBACK srvDownloadRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERL
 --  PROGRAMMER:    Matt Goerwell
 --
 --  NOTES:
---      Removes a client from the server's list of clients.
+--      Removes a socket(client) from the server's list of clients.
 ---------------------------------------------------------------------------------------*/
-void removeClient(SOCKET socket)
+void removeSocket(SOCKET socket)
 {
     qDebug() << "Closing socket: " << (int)socket;
     const char *client = clientMap.find(socket)->second.c_str();

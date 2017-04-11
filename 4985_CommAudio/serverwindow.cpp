@@ -439,9 +439,7 @@ void ServerWindow::updateClients(const char *client)
 void ServerWindow::removeClient(const char *client)
 {
     QListWidgetItem *item;
-    char delClient[CLIENT_SIZE]; // hold client string to delete
     char itemText[CLIENT_SIZE]; // hold string content of list item
-    sprintf(delClient, "%s", client); // copy char param to buffer
 
     // iterate through the client list
     for (int row = 0; row < ui->srvClientListWidgest->count(); row++)
@@ -450,7 +448,7 @@ void ServerWindow::removeClient(const char *client)
         sprintf(itemText, item->text().toStdString().c_str()); // copys the items string content
 
         // if list item is matches the client string the delete
-        if (strcmp(itemText, delClient) == 0)
+        if (strcmp(itemText, client) == 0)
         {  // remove current client row from list
            ui->srvClientListWidgest->takeItem(row);
         }
