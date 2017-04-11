@@ -423,6 +423,38 @@ void ServerWindow::updateClients(const char *client)
     ui->srvClientListWidgest->addItem(newClient);
 }
 
+/********************************************************
+ *  Function:       void ServerWindow::removeClient(const char *client)
+ *                      const char *client: Client IP address
+ *
+ *  Programmer:     Alex Zielinski
+ *
+ *  Created:        Mar 20 2017
+ *
+ *  Modified:       Matt Goerwell ~ April 10 2017
+ *
+ *  Desc:
+ *      removes a client from the servers client list
+ *******************************************************/
+void ServerWindow::removeClient(const char *client)
+{
+    QListWidgetItem *item;
+    char itemText[CLIENT_SIZE]; // hold string content of list item
+
+    // iterate through the client list
+    for (int row = 0; row < ui->srvClientListWidgest->count(); row++)
+    {
+        item = ui->srvClientListWidgest->item(row); // get current item
+        sprintf(itemText, item->text().toStdString().c_str()); // copys the items string content
+
+        // if list item is matches the client string the delete
+        if (strcmp(itemText, client) == 0)
+        {  // remove current client row from list
+           ui->srvClientListWidgest->takeItem(row);
+        }
+    }
+}
+
 void ServerWindow::on_srvSelectPlaylistButton_clicked()
 {
 
