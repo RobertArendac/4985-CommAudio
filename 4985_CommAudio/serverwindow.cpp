@@ -20,6 +20,7 @@
 #include "ui_serverwindow.h"
 #include "server.h"
 #include "audio.h"
+#include "threadinfo.h"
 #include <QDir>
 #include <QListWidget>
 #include <QDataStream>

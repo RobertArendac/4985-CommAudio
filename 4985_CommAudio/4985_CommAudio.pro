@@ -39,7 +39,9 @@ HEADERS  += mainwindow.h \
     client.h \
     clientwindow.h \
     serverwindow.h \
-    audio.h
+    audio.h \
+    socketinformation.h \
+    threadinfo.h
 
 
 FORMS    += mainwindow.ui \

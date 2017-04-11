@@ -18,7 +18,7 @@
 #include "clientwindow.h"
 #include "ui_clientwindow.h"
 #include "client.h"
-#include "wrappers.h"
+#include "threadinfo.h"
 #include <QFile>
 #include <QFileDialog>
 

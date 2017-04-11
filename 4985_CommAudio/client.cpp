@@ -5,7 +5,7 @@
 #include <QFileDialog>
 #include <QFile>
 #include <QFileInfo>
-
+#include "socketinformation.h"
 ClientWindow *clientWind;
 
 SOCKET cltSck;      //Connected TCP socket
