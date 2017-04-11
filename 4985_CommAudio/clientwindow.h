@@ -28,10 +28,10 @@ public:
     static DWORD WINAPI tcpClientThread(void *);
     void updateSongs(QStringList songs);
     void updateClientStatus(QString status);
+    void enableButtons();
 
 private slots:
     void on_cltConnect_clicked();
-    void on_cltSelectAllButton_clicked();
     void on_cltUpdateButton_clicked();
     void on_cltUploadButton_clicked();
     void on_cltPlaySelectedTrackButton_clicked();
