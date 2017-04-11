@@ -63,8 +63,9 @@ void ClientWindow::on_cltConnect_clicked()
     ti->UDPPort = ui->cltUDPPortSpinner->value();
     ti->cWindow = this;
 
-    CreateThread(NULL, 0, ClientWindow::udpClientThread, (void *)ti, 0, NULL);
-    CreateThread(NULL, 0, ClientWindow::tcpClientThread, (void *)ti, 0, NULL);
+    runTCPClient(this, ti->cltIP, ti->TCPPort);
+
+    //CreateThread(NULL, 0, ClientWindow::udpClientThread, (void *)ti, 0, NULL);
 
 }
 
