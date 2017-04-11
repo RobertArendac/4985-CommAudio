@@ -154,7 +154,7 @@ void ServerWindow::on_srvTrackStopButton_clicked()
 ---------------------------------------------------------------------------------------*/
 void ServerWindow::on_srvTrackPauseButton_clicked()
 {
-    sendAudio("hey there friend");
+    sendAudio("This is a test");
 }
 
 void ServerWindow::on_srvTrackFFButton_clicked()

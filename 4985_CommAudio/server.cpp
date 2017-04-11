@@ -373,11 +373,10 @@ void runUDPServer(ServerWindow *sw, int port)
     u_long ttl = MCAST_TTL;     //Time to live
     int flag = 0;               //False flag
     SocketInformation *si;
-    DWORD recvBytes, result, flags = 0;
-    WSAEVENT events[1];
 
     // Init address info
-    addr = serverCreateAddress(port);
+    addr = serverCreateAddress(0);
+    addr.sin_port = 0;
 
     // Create a socket for incomming data
     if ((acceptSocket = createSocket(SOCK_DGRAM, IPPROTO_UDP)) == NULL)
@@ -386,12 +385,16 @@ void runUDPServer(ServerWindow *sw, int port)
         return;
     }
 
+    qDebug() << "Socket Created";
+
     // bind the socket
     if (!bindSocket(acceptSocket, &addr))
     {
         sw->updateServerStatus("Status: Socket Error");
         return;
     }
+
+    qDebug() << "Socket Bind";
 
     // Multicast interface
     stMreq.imr_multiaddr.s_addr = inet_addr(MCAST_ADDR);
@@ -404,17 +407,23 @@ void runUDPServer(ServerWindow *sw, int port)
         return;
     }
 
+    qDebug() << "Socket Option IP_ADD_MEMBERSHIP";
+
     if (!setServOptions(acceptSocket, IP_MULTICAST_TTL, (char *)&ttl))
     {
         sw->updateServerStatus("Status: Socket Error");
         return;
     }
 
+    qDebug() << "Socket Option IP_MULTICAST_TTL";
+
     if (!setServOptions(acceptSocket, IP_MULTICAST_LOOP, (char *)&flag))
     {
         sw->updateServerStatus("Status: Socket Error");
         return;
     }
+
+    qDebug() << "Socket Option IP_MULTICAST_LOOP";
 
     cltDest = clientCreateAddress(MCAST_ADDR, MCAST_PORT);
 
@@ -425,14 +434,14 @@ void runUDPServer(ServerWindow *sw, int port)
     si->socket = acceptSocket;
     audioSock = acceptSocket;
     ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
-    memset(si->buffer, 0, sizeof(si->buffer));
+    memset(si->audioBuffer, 0, sizeof(si->audioBuffer));
     si->bytesReceived = 0;
     si->bytesSent = 0;
-    si->dataBuf.len = BUF_SIZE;
-    si->dataBuf.buf = si->buffer;
+    si->dataBuf.len = OFFSET;
+    si->dataBuf.buf = si->audioBuffer;
 
-    while(1)
-    {
+    while(1);
+
         /**
         //Testing UDP works, use as template for actually doing something useful
 
@@ -448,7 +457,7 @@ void runUDPServer(ServerWindow *sw, int port)
 
         qDebug() << si->dataBuf.buf << endl;
     */
-    }
+
 }
 
 /*--------------------------------------------------------------------------------------

@@ -168,16 +168,7 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port)
         return;
     }
 
-    // Check for valid host
-    if (!connectHost(ip))
-    {
-        cw->updateClientStatus("Status: Host IP Error");
-        return;
-    }
-
-    // Init address info
-    memset((char *)&addr, 0, sizeof(SOCKADDR_IN));
-    addr = clientCreateAddress(ip, port);
+    qDebug() << "Socket created";
 
     // Set the reuse addr
     if (!setCltOptions(sck, SO_REUSEADDR, (char *)&flag))
@@ -186,15 +177,21 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port)
         return;
     }
 
-    memset((char *)&srvAddr, 0, sizeof(SOCKADDR_IN));
-    srvAddr = serverCreateAddress(port);
+    qDebug() << "Options Set";
+
+    // Init address info
+    memset((char *)&addr, 0, sizeof(SOCKADDR_IN));
+    addr = serverCreateAddress(MCAST_PORT);
 
     // Bind to multicast group
-    if (!bindSocket(sck, &srvAddr))
+    if (!bindSocket(sck, &addr))
     {
         cw->updateClientStatus("Status: Socket Error");
         return;
     }
+
+    qDebug() << "Socket Bind";
+
 
     // Setup multicast interface
     stMreq.imr_multiaddr.s_addr = inet_addr(MCAST_ADDR);
@@ -206,6 +203,8 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port)
         cw->updateClientStatus("Status: Socket Error");
         return;
     }
+
+    qDebug() << "Multicast Group Joined";
 
     //Allocate socket information
     si = (SocketInformation *)malloc(sizeof(SocketInformation));
@@ -233,6 +232,9 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port)
     /* This is here because we do not have a graceful shutdown.  We will need to design all sockets
      * being closed and all TCP and UDP functions ending before performing any sort of cleanup.
      */
+
+    qDebug() << "Ready to Receive";
+
     while (1)
     {
         if(WSARecvFrom(si->socket, &(si->dataBuf), 1, NULL, &flags, NULL, NULL, &(si->overlapped), newRoutine) != 0)
@@ -252,7 +254,9 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port)
             qDebug() <<"WaitForMultipleEvents() failed " << WSAGetLastError();
         }
 
-            qDebug() << si->dataBuf.buf << endl;
+        exit(1);
+
+        qDebug() << si->dataBuf.buf << endl;
 
     }
 
