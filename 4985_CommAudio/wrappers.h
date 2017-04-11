@@ -12,28 +12,9 @@
 #define MCAST_PORT  8910
 #define MCAST_TTL   32  //Kind of an arbitrary setting, I don't know what's best here...
 
-#define BUF_SIZE 2048   //size of the buffer parameter for socketInformation
 #define SONG_SIZE 1024
-#define IP_SIZE 16
 
-typedef struct {
-    char cltIP[IP_SIZE];
-    int TCPPort;
-    int UDPPort;
-    ServerWindow *sWindow;
-    ClientWindow *cWindow;
-} ThreadInfo;
 
-// Hold all the information associated with a socket
-typedef struct SocketInformation {
-    OVERLAPPED overlapped;
-    char buffer[BUF_SIZE];
-    //char filename[BUF_SIZE];
-    WSABUF dataBuf;
-    SOCKET socket;
-    DWORD bytesSent;
-    DWORD bytesReceived;
-} SocketInformation;
 
 int startWinsock();
 int bindSocket(SOCKET s, SOCKADDR_IN *addr);

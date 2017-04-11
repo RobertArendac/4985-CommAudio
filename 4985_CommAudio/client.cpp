@@ -5,7 +5,7 @@
 #include <QFileDialog>
 #include <QFile>
 #include <QFileInfo>
-
+#include "socketinformation.h"
 ClientWindow *clientWind;
 
 SOCKET cltSck;      //Connected TCP socket
@@ -119,6 +119,7 @@ void runTCPClient(ClientWindow *cw, const char *ip, int port)
 
     free(si);
     cw->updateClientStatus("Status: Connected");
+    cw->enableButtons();
 }
 
 /*--------------------------------------------------------------------------------------
@@ -307,6 +308,7 @@ void requestSong(const char *song) {
 --      then waits to receive the song list.
 ---------------------------------------------------------------------------------------*/
 void updateClientSongs() {
+
     SocketInformation *si;
     WSAEVENT events[1];
     DWORD result, flags = 0;

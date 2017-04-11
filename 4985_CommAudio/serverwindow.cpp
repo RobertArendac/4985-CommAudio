@@ -20,6 +20,7 @@
 #include "ui_serverwindow.h"
 #include "server.h"
 #include "audio.h"
+#include "threadinfo.h"
 #include <QDir>
 #include <QListWidget>
 #include <QDataStream>
@@ -71,11 +72,6 @@ void ServerWindow::on_srvStartStopButton_clicked()
 
     CreateThread(NULL, 0, ServerWindow::tcpServerThread, (void *)ti, 0, NULL);
     CreateThread(NULL, 0, ServerWindow::udpServerThread, (void *)ti, 0, NULL);
-}
-
-void ServerWindow::on_srvTrackRWButton_clicked()
-{
-
 }
 
 /*--------------------------------------------------------------------------------------
@@ -153,11 +149,6 @@ void ServerWindow::on_srvTrackStopButton_clicked()
 --      Pause audio if audio is playing
 ---------------------------------------------------------------------------------------*/
 void ServerWindow::on_srvTrackPauseButton_clicked()
-{
-
-}
-
-void ServerWindow::on_srvTrackFFButton_clicked()
 {
 
 }
@@ -296,11 +287,6 @@ void ServerWindow::on_srvTrackNextButton_clicked()
 void ServerWindow::on_srvTrackPreviousButton_clicked()
 {
     playPrevTrack();
-}
-
-void ServerWindow::on_srvShuffleRadioButton_clicked()
-{
-
 }
 
 /*--------------------------------------------------------------------------------------
@@ -453,9 +439,4 @@ void ServerWindow::removeClient(const char *client)
            ui->srvClientListWidgest->takeItem(row);
         }
     }
-}
-
-void ServerWindow::on_srvSelectPlaylistButton_clicked()
-{
-
 }
