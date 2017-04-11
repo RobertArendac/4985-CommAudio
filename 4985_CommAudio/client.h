@@ -12,6 +12,7 @@ void requestSong(const char *song);
 void updateClientSongs();
 void downloadSong(const char *song);
 void uploadSong(QString song);
+void removeClient(SOCKET socket);
 void CALLBACK songRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
 void CALLBACK pickRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
 void CALLBACK downloadRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);

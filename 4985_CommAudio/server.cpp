@@ -252,8 +252,7 @@ void CALLBACK parseRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
         {
             fprintf(stderr, "Error: %d\n", error);
         }
-        fprintf(stderr, "Closing socket: %d\n", (int)si->socket);
-        closesocket(si->socket);
+        removeClient(si->socket);
         return;
     }
     if (strcmp("pick", si->buffer) == 0)
@@ -308,7 +307,7 @@ void selectSong(SocketInformation *si)
     if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
         fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
 
-    //temporary until I know how song selection works. replace this with playing the song.
+    //temporary until I know how song selection works. replace this with playing the song, once ALEX has it ready.
     fprintf(stdout,"Song name: %s\n",si->buffer);
 }
 
@@ -490,7 +489,7 @@ void downloadFromClient(SocketInformation *si)
 }
 
 /*--------------------------------------------------------------------------------------
---  INTERFACE:     void downloadFromClient(SocketInformation *si)
+--  INTERFACE:     void uploadFromClient(SocketInformation *si)
 --                     SocketInformation *si: Pointer to struct containing socket info
 --
 --  RETURNS:       void
@@ -646,4 +645,27 @@ void CALLBACK srvDownloadRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERL
 
     // Receive another packet
     WSARecv(si->socket, &(si->dataBuf), 1, &recvBytes, &flags, &(si->overlapped), srvDownloadRoutine);
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void removeClient(SOCKET socket)
+--                     SOCKET socket: the socket(client) that is being removed.
+--
+--  RETURNS:       void
+--
+--  DATE:          April 10, 2017
+--
+--  DESIGNER:      Matt Goerwell
+--
+--  PROGRAMMER:    Matt Goerwell
+--
+--  NOTES:
+--      Removes a client from the server's list of clients.
+---------------------------------------------------------------------------------------*/
+void removeClient(SOCKET socket) {
+    qDebug() << "Closing socket: " << (int)socket;
+    const char *client = clientMap.find(socket)->second.c_str();
+    servWin->removeClient(client);
+    clientMap.erase(socket);
+    closesocket(socket);
 }
