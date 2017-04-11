@@ -311,7 +311,8 @@ void ClientWindow::updateClientStatus(QString status)
 --  NOTES:
 --      Enables the use of ui buttons after a connection is confirmed.
 ---------------------------------------------------------------------------------------*/
-void ClientWindow::enableButtons() {
+void ClientWindow::enableButtons()
+{
     ui->cltUpdateButton->setEnabled(true);
     ui->cltUploadButton->setEnabled(true);
     ui->cltPlaySelectedTrackButton->setEnabled(true);
