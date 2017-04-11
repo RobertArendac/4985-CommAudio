@@ -154,12 +154,17 @@ void runTCPClient(ClientWindow *cw, const char *ip, int port)
 void runUDPClient(ClientWindow *cw, const char *ip, int port)
 {
     SOCKET sck;                 //Socket to send/receive on
-    SOCKADDR_IN addr, srvAddr;  //Addresses for sending/receiving
+    SOCKADDR_IN addr;  //Addresses for sending/receiving
     struct ip_mreq stMreq;      //Struct for multicasting
     int flag = 1;               //True flag
     SocketInformation *si;
+    u_long ttl = MCAST_TTL;     //Time to live
     DWORD sendBytes, recvBytes, result, flags = 0;
     WSAEVENT events[1];         //Event array
+
+    // Init address info
+    memset((char *)&addr, 0, sizeof(SOCKADDR_IN));
+    addr = clientCreateAddress(MCAST_ADDR, MCAST_PORT);
 
     // Create a UDP socket
     if ((sck = createSocket(SOCK_DGRAM, IPPROTO_UDP)) == NULL)
@@ -179,10 +184,6 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port)
 
     qDebug() << "Options Set";
 
-    // Init address info
-    memset((char *)&addr, 0, sizeof(SOCKADDR_IN));
-    addr = serverCreateAddress(MCAST_PORT);
-
     // Bind to multicast group
     if (!bindSocket(sck, &addr))
     {
@@ -192,19 +193,36 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port)
 
     qDebug() << "Socket Bind";
 
-
     // Setup multicast interface
     stMreq.imr_multiaddr.s_addr = inet_addr(MCAST_ADDR);
     stMreq.imr_interface.s_addr = INADDR_ANY;
 
-    // Join multicast group
+    if (!setServOptions(sck, IP_MULTICAST_TTL, (char *)&ttl))
+    {
+        cw->updateClientStatus("Status: Socket Error");
+        return;
+    }
+
+    qDebug() << "Socket Option IP_MULTICAST_TTL";
+
+    flag = 0;
+    if (!setServOptions(sck, IP_MULTICAST_LOOP, (char *)&flag))
+    {
+        cw->updateClientStatus("Status: Socket Error");
+        return;
+    }
+
+    qDebug() << "Socket Option IP_MULTICAST_LOOP";
+
+
+    // Join multicast group, specify time-to-live, and disable loop
     if (!setServOptions(sck, IP_ADD_MEMBERSHIP, (char *)&stMreq))
     {
         cw->updateClientStatus("Status: Socket Error");
         return;
     }
 
-    qDebug() << "Multicast Group Joined";
+    qDebug() << "Socket Option IP_ADD_MEMBERSHIP";
 
     //Allocate socket information
     si = (SocketInformation *)malloc(sizeof(SocketInformation));
@@ -254,7 +272,6 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port)
             qDebug() <<"WaitForMultipleEvents() failed " << WSAGetLastError();
         }
 
-        exit(1);
 
         qDebug() << si->dataBuf.buf << endl;
 

@@ -8,7 +8,7 @@
 std::map<SOCKET, std::string> clientMap;
 char filepath[SONG_SIZE];
 ServerWindow *servWin;
-SOCKADDR_IN cltDest;
+SOCKADDR_IN multiDest;
 SOCKET audioSock;
 
 void sendAudio(const char *data)
@@ -27,7 +27,7 @@ void sendAudio(const char *data)
     si->dataBuf.len = OFFSET;
     si->dataBuf.buf = si->audioBuffer;
 
-    WSASendTo(si->socket, &(si->dataBuf), 1, NULL, 0, (SOCKADDR *)&cltDest, sizeof(SOCKADDR_IN), &(si->overlapped), clientRoutine);
+    WSASendTo(si->socket, &(si->dataBuf), 1, NULL, 0, (SOCKADDR *)&multiDest, sizeof(SOCKADDR_IN), &(si->overlapped), clientRoutine);
 
     events[0] = WSACreateEvent();
 
@@ -371,12 +371,13 @@ void runUDPServer(ServerWindow *sw, int port)
     SOCKET acceptSocket;        //Connect to send/receive on
     struct ip_mreq stMreq;      //Struct for multicasting
     u_long ttl = MCAST_TTL;     //Time to live
-    int flag = 0;               //False flag
+    int flag = 1;               //False flag
     SocketInformation *si;
 
     // Init address info
-    addr = serverCreateAddress(0);
-    addr.sin_port = 0;
+    memset((char *)&addr, 0, sizeof(SOCKADDR_IN));
+    addr = clientCreateAddress(MCAST_ADDR, MCAST_PORT);
+    multiDest = addr;
 
     // Create a socket for incomming data
     if ((acceptSocket = createSocket(SOCK_DGRAM, IPPROTO_UDP)) == NULL)
@@ -386,6 +387,16 @@ void runUDPServer(ServerWindow *sw, int port)
     }
 
     qDebug() << "Socket Created";
+
+    // Set the reuse addr
+    if (!setCltOptions(acceptSocket, SO_REUSEADDR, (char *)&flag))
+    {
+        sw->updateServerStatus("Status: Socket Error");
+        return;
+    }
+
+    qDebug() << "Socket Option REUSEADDR";
+
 
     // bind the socket
     if (!bindSocket(acceptSocket, &addr))
@@ -400,15 +411,6 @@ void runUDPServer(ServerWindow *sw, int port)
     stMreq.imr_multiaddr.s_addr = inet_addr(MCAST_ADDR);
     stMreq.imr_interface.s_addr = INADDR_ANY;
 
-    // Join multicast group, specify time-to-live, and disable loop
-    if (!setServOptions(acceptSocket, IP_ADD_MEMBERSHIP, (char *)&stMreq))
-    {
-        sw->updateServerStatus("Status: Socket Error");
-        return;
-    }
-
-    qDebug() << "Socket Option IP_ADD_MEMBERSHIP";
-
     if (!setServOptions(acceptSocket, IP_MULTICAST_TTL, (char *)&ttl))
     {
         sw->updateServerStatus("Status: Socket Error");
@@ -417,6 +419,7 @@ void runUDPServer(ServerWindow *sw, int port)
 
     qDebug() << "Socket Option IP_MULTICAST_TTL";
 
+    flag = 0;
     if (!setServOptions(acceptSocket, IP_MULTICAST_LOOP, (char *)&flag))
     {
         sw->updateServerStatus("Status: Socket Error");
@@ -425,7 +428,15 @@ void runUDPServer(ServerWindow *sw, int port)
 
     qDebug() << "Socket Option IP_MULTICAST_LOOP";
 
-    cltDest = clientCreateAddress(MCAST_ADDR, MCAST_PORT);
+
+    // Join multicast group, specify time-to-live, and disable loop
+    if (!setServOptions(acceptSocket, IP_ADD_MEMBERSHIP, (char *)&stMreq))
+    {
+        sw->updateServerStatus("Status: Socket Error");
+        return;
+    }
+
+    qDebug() << "Socket Option IP_ADD_MEMBERSHIP";
 
     //Allocate socket information
     si = (SocketInformation *)malloc(sizeof(SocketInformation));
