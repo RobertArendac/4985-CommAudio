@@ -24,6 +24,7 @@ public:
     static DWORD WINAPI tcpServerThread(void *arg);
     void createSongList();
     void updateClients(const char *client);
+    void ServerWindow::removeClient(const char *client);
     static QStringList getSongs();
     void updateServerStatus(QString status);
     void playNextTrack();
