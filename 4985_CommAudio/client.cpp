@@ -92,7 +92,6 @@ void runTCPClient(ClientWindow *cw, const char *ip, int port)
         return;
     }
 
-
     cltSck = sck;
 
     //Allocate socket information
