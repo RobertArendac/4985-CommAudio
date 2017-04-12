@@ -113,14 +113,6 @@
       <number>7080</number>
      </property>
     </widget>
-    <zorder>srvStartStopButton</zorder>
-    <zorder>srvStatusLabel</zorder>
-    <zorder>srvTCPPortLabel</zorder>
-    <zorder>srvUDPPortLabel</zorder>
-    <zorder>srvTCPPortSpinner</zorder>
-    <zorder>srvUDPPortSpinner</zorder>
-    <zorder>groupBox_2</zorder>
-    <zorder>musicList_2</zorder>
    </widget>
    <widget class="QGroupBox" name="groupBox">
     <property name="geometry">
@@ -137,7 +129,7 @@
     <widget class="QPushButton" name="srvTrackPlayButton">
      <property name="geometry">
       <rect>
-       <x>180</x>
+       <x>120</x>
        <y>30</y>
        <width>101</width>
        <height>23</height>
@@ -150,9 +142,9 @@
     <widget class="QPushButton" name="srvTrackNextButton">
      <property name="geometry">
       <rect>
-       <x>400</x>
+       <x>360</x>
        <y>30</y>
-       <width>71</width>
+       <width>101</width>
        <height>23</height>
       </rect>
      </property>
@@ -165,7 +157,7 @@
       <rect>
        <x>10</x>
        <y>30</y>
-       <width>71</width>
+       <width>101</width>
        <height>21</height>
       </rect>
      </property>
@@ -199,7 +191,7 @@
     <widget class="QPushButton" name="srvTrackStopButton">
      <property name="geometry">
       <rect>
-       <x>290</x>
+       <x>240</x>
        <y>30</y>
        <width>101</width>
        <height>23</height>
@@ -207,19 +199,6 @@
      </property>
      <property name="text">
       <string>Stop</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="srvTrackPauseButton">
-     <property name="geometry">
-      <rect>
-       <x>90</x>
-       <y>30</y>
-       <width>81</width>
-       <height>23</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Pause</string>
      </property>
     </widget>
    </widget>
