@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>826</width>
-    <height>609</height>
+    <height>474</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,10 +17,10 @@
    <widget class="QGroupBox" name="cltConnectionGroupBox">
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>20</y>
-      <width>231</width>
-      <height>171</height>
+      <x>110</x>
+      <y>10</y>
+      <width>601</width>
+      <height>81</height>
      </rect>
     </property>
     <property name="title">
@@ -29,7 +29,7 @@
     <widget class="QLineEdit" name="cltHostIPEditText">
      <property name="geometry">
       <rect>
-       <x>80</x>
+       <x>70</x>
        <y>20</y>
        <width>113</width>
        <height>20</height>
@@ -55,8 +55,8 @@
     <widget class="QLabel" name="cltTCPPortLabel">
      <property name="geometry">
       <rect>
-       <x>30</x>
-       <y>50</y>
+       <x>200</x>
+       <y>20</y>
        <width>41</width>
        <height>16</height>
       </rect>
@@ -68,8 +68,8 @@
     <widget class="QLabel" name="cltStatusLabel">
      <property name="geometry">
       <rect>
-       <x>30</x>
-       <y>110</y>
+       <x>320</x>
+       <y>50</y>
        <width>161</width>
        <height>16</height>
       </rect>
@@ -81,8 +81,8 @@
     <widget class="QPushButton" name="cltConnect">
      <property name="geometry">
       <rect>
-       <x>90</x>
-       <y>140</y>
+       <x>190</x>
+       <y>50</y>
        <width>61</width>
        <height>21</height>
       </rect>
@@ -94,8 +94,8 @@
     <widget class="QSpinBox" name="cltTCPPortSpinner">
      <property name="geometry">
       <rect>
-       <x>80</x>
-       <y>50</y>
+       <x>250</x>
+       <y>20</y>
        <width>111</width>
        <height>22</height>
       </rect>
@@ -110,8 +110,8 @@
     <widget class="QLabel" name="cltUDPPortLabel">
      <property name="geometry">
       <rect>
-       <x>30</x>
-       <y>80</y>
+       <x>380</x>
+       <y>20</y>
        <width>47</width>
        <height>13</height>
       </rect>
@@ -123,8 +123,8 @@
     <widget class="QSpinBox" name="cltUDPPortSpinner">
      <property name="geometry">
       <rect>
-       <x>80</x>
-       <y>80</y>
+       <x>430</x>
+       <y>20</y>
        <width>111</width>
        <height>22</height>
       </rect>
@@ -141,71 +141,35 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>200</y>
-      <width>301</width>
-      <height>371</height>
+      <y>370</y>
+      <width>291</width>
+      <height>61</height>
      </rect>
     </property>
     <property name="title">
      <string>Microphone</string>
     </property>
-    <widget class="QListWidget" name="cltClientListWidget">
+    <widget class="QLabel" name="cltStatusLabel_2">
      <property name="geometry">
       <rect>
-       <x>30</x>
-       <y>50</y>
-       <width>241</width>
-       <height>271</height>
-      </rect>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="cltSelectAllButton">
-     <property name="geometry">
-      <rect>
-       <x>30</x>
-       <y>330</y>
-       <width>75</width>
-       <height>23</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Select All</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="cltClientListLabel">
-     <property name="geometry">
-      <rect>
-       <x>30</x>
+       <x>20</x>
        <y>30</y>
-       <width>47</width>
-       <height>13</height>
+       <width>161</width>
+       <height>16</height>
       </rect>
      </property>
      <property name="text">
-      <string>Client List</string>
+      <string>Status: OFF</string>
      </property>
     </widget>
-   </widget>
-   <widget class="QGroupBox" name="cltTrackGroupBox">
-    <property name="geometry">
-     <rect>
-      <x>260</x>
-      <y>20</y>
-      <width>551</width>
-      <height>171</height>
-     </rect>
-    </property>
-    <property name="title">
-     <string>Track</string>
-    </property>
    </widget>
    <widget class="QGroupBox" name="cltTrackListGroupBox">
     <property name="geometry">
      <rect>
-      <x>330</x>
-      <y>200</y>
-      <width>441</width>
-      <height>371</height>
+      <x>10</x>
+      <y>160</y>
+      <width>801</width>
+      <height>201</height>
      </rect>
     </property>
     <property name="title">
@@ -216,8 +180,8 @@
       <rect>
        <x>30</x>
        <y>50</y>
-       <width>391</width>
-       <height>241</height>
+       <width>681</width>
+       <height>111</height>
       </rect>
      </property>
     </widget>
@@ -238,6 +202,9 @@
      </property>
     </widget>
     <widget class="QPushButton" name="cltUploadButton">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="geometry">
       <rect>
        <x>110</x>
@@ -251,10 +218,13 @@
      </property>
     </widget>
     <widget class="QPushButton" name="cltPlaySelectedTrackButton">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="geometry">
       <rect>
        <x>30</x>
-       <y>300</y>
+       <y>170</y>
        <width>131</width>
        <height>23</height>
       </rect>
@@ -264,16 +234,84 @@
      </property>
     </widget>
     <widget class="QPushButton" name="cltDownloadSelectedTrackButton">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="geometry">
       <rect>
-       <x>30</x>
-       <y>330</y>
+       <x>180</x>
+       <y>170</y>
        <width>131</width>
        <height>23</height>
       </rect>
      </property>
      <property name="text">
-      <string>Dowload Selected Track</string>
+      <string>Download Selected Track</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QGroupBox" name="cltTrackGroupBox">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>90</y>
+      <width>801</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Track</string>
+    </property>
+   </widget>
+   <widget class="QGroupBox" name="cltMicrophoneGroupBox_2">
+    <property name="geometry">
+     <rect>
+      <x>400</x>
+      <y>370</y>
+      <width>301</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Credits</string>
+    </property>
+    <widget class="QLabel" name="label">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>10</y>
+       <width>281</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Men from Kazahkstan</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_2">
+     <property name="geometry">
+      <rect>
+       <x>160</x>
+       <y>10</y>
+       <width>281</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>COMM Audio</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_3">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>30</y>
+       <width>281</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Robert Arendac, Matt Goerwell, Alex Zielinski</string>
      </property>
     </widget>
    </widget>

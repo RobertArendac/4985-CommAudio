@@ -5,18 +5,21 @@
 #include <Windows.h>
 #include "wrappers.h"
 
+//Socket handlers
 SOCKADDR_IN clientCreateAddress(const char *host, int port);
 void runTCPClient(ClientWindow *cw, const char *ip, int port);
 void runUDPClient(ClientWindow *cw, const char *ip, int port);
+
+//request methods
+void downloadSong(const char *song);
 void requestSong(const char *song);
 void updateClientSongs();
-void downloadSong(const char *song);
 void uploadSong(QString song);
-void CALLBACK songRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
-void CALLBACK pickRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
-void CALLBACK downloadRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
-void CALLBACK sendRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
-void CALLBACK newRoutine(DWORD error, DWORD bytesTransferred, LPOVERLAPPED overlapped, DWORD flags);
 
+//callback routines
+void CALLBACK downloadRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
+void CALLBACK pickRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
+void CALLBACK sendRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
+void CALLBACK songRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
 
 #endif // CLIENT_H

@@ -30,6 +30,7 @@ QString currTrack;
 QVector<QByteArray> chunks(10);
 int currPos = OFFSET;
 int startPos = 0;
+int stopFlag = 0;
 
 int a = 0;
 int b = OFFSET;
@@ -128,9 +129,13 @@ void initAudioOutput()
 void play(QString filePath)
 {
     currTrack = filePath; // set current track to what user selected
-    loadAudioData(currTrack); // load raw data from wav file to a buffer
-    loadAudioStream();
-    playStream();
+
+    if (prevTrack != currTrack || output->state() == QAudio::IdleState && prevTrack == filePath)
+    {
+        loadAudioData(currTrack); // load raw data from wav file to a buffer
+        loadAudioStream();
+        playStream();
+    }
 }
 
 /*--------------------------------------------------------------------------------------
@@ -154,17 +159,15 @@ void loadAudioData(QString filePath)
     QFile audioFile(filePath);
     // open audio file
     if (audioFile.open(QIODevice::ReadOnly))
-    {   // check if user selected a different track
-        if (prevTrack != currTrack || output->state() == QAudio::IdleState && prevTrack == filePath)
-        {
-            prevTrack = currTrack;
-            // seek to raw audio data of wav file
-            audioFile.seek(AUDIODATA);
+    {
+        prevTrack = currTrack;
+        // seek to raw audio data of wav file
+        audioFile.seek(AUDIODATA);
 
-            // extract raw audio data
-            audioByteData = audioFile.readAll();
-            qDebug() << "size: " << audioByteData.size();
-        }
+        // extract raw audio data
+        audioByteData = audioFile.readAll();
+        qDebug() << "size: " << audioByteData.size();
+        audioFile.close();
     }
 }
 
@@ -223,18 +226,20 @@ void playStream()
     buf.open(QIODevice::ReadWrite);
     int i = 0;
 
-    //output->setVolume(0.0);
-
     qDebug() << "start";
 
-    //int x = 0;
     while(i < 10)
     {
-        if(chunks[i].size() == 0)
+        if(stopFlag == 1)
         {
-            qDebug() << "song done";
+            output->stop();
+            audioByteData.clear();
+            tmp.clear();
+            buf.close();
+            stopFlag = 0;
             return;
         }
+
         //memset(chunkToSend, 0, OFFSET);
         tmp.append(chunks[i].data(),chunks[i].size());
         //strcpy(chunkToSend, chunks[i].data());
@@ -283,11 +288,5 @@ void playStream()
 ---------------------------------------------------------------------------------------*/
 void stopAudio()
 {
-    // check if audio is playing
-    if (output->state() == QAudio::ActiveState)
-    {
-        output->stop(); // stop the audio
-        output->reset();
-        //audioBuffer.close();
-    }
+    stopFlag = 1;
 }

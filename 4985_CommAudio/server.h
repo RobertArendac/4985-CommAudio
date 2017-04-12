@@ -11,22 +11,30 @@
 #include <QAudioInput>
 #include <QAudioDeviceInfo>
 #include <QEventLoop>
+#include "socketinformation.h"
 #include "wrappers.h"
 
-void sendAudio(const char *data);
+//Audio Methods
 void playAudio(QString filePath);
-void pauseAudio();
+void sendAudio(const char *data);
+
+//Socket Handling
+void removeSocket(SOCKET socket);
 void runTCPServer(ServerWindow *sw, int port);
 void runUDPServer(ServerWindow *sw, int port);
 SOCKADDR_IN serverCreateAddress(int port);
 DWORD WINAPI tcpClient(void *arg);
-void removeSocket(SOCKET socket);
+
+
+//Request methods
 void selectSong(SocketInformation *si);
-void CALLBACK parseRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD);
-void CALLBACK clientRoutine(DWORD error, DWORD, LPWSAOVERLAPPED, DWORD);
-void CALLBACK srvDownloadRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
 void sendSongs(SocketInformation *si);
 void uploadToClient(SocketInformation *si);
 void downloadFromClient(SocketInformation *si);
+
+//callback functions
+void CALLBACK clientRoutine(DWORD error, DWORD, LPWSAOVERLAPPED, DWORD);
+void CALLBACK parseRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD);
+void CALLBACK srvDownloadRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
 
 #endif // SERVER_H

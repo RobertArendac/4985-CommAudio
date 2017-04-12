@@ -18,7 +18,7 @@
 #include "clientwindow.h"
 #include "ui_clientwindow.h"
 #include "client.h"
-#include "wrappers.h"
+#include "threadinfo.h"
 #include <QFile>
 #include <QFileDialog>
 
@@ -63,15 +63,12 @@ void ClientWindow::on_cltConnect_clicked()
     ti->UDPPort = ui->cltUDPPortSpinner->value();
     ti->cWindow = this;
 
+    runTCPClient(this, ti->cltIP, ti->TCPPort);
+
     CreateThread(NULL, 0, ClientWindow::udpClientThread, (void *)ti, 0, NULL);
-    CreateThread(NULL, 0, ClientWindow::tcpClientThread, (void *)ti, 0, NULL);
 
 }
 
-void ClientWindow::on_cltSelectAllButton_clicked()
-{
-
-}
 
 /*--------------------------------------------------------------------------------------
 --  INTERFACE:     void ClientWindow::on_cltUpdateButton_clicked()
@@ -281,7 +278,7 @@ void ClientWindow::keyReleaseEvent(QKeyEvent* e)
 }
 
 /*--------------------------------------------------------------------------------------
---  INTERFACE:     void clientWindow::updateStatus(int status)
+--  INTERFACE:     void clientWindow::updateClientStatus(int status)
 --                     int status: return value of a function to determine status of client
 --
 --  RETURNS:       void
@@ -298,4 +295,26 @@ void ClientWindow::keyReleaseEvent(QKeyEvent* e)
 void ClientWindow::updateClientStatus(QString status)
 {
     ui->cltStatusLabel->setText(status);
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void clientWindow::enableButtons()
+--
+--  RETURNS:       void
+--
+--  DATE:          April 11, 2017
+--
+--  DESIGNER:      Matt Goerwell
+--
+--  PROGRAMMER:    Matt Goerwell
+--
+--  NOTES:
+--      Enables the use of ui buttons after a connection is confirmed.
+---------------------------------------------------------------------------------------*/
+void ClientWindow::enableButtons()
+{
+    ui->cltUpdateButton->setEnabled(true);
+    ui->cltUploadButton->setEnabled(true);
+    ui->cltPlaySelectedTrackButton->setEnabled(true);
+    ui->cltDownloadSelectedTrackButton->setEnabled(true);
 }
