@@ -534,6 +534,21 @@ void uploadToClient(SocketInformation *si)
     loops = sz / BUF_SIZE + (sz % BUF_SIZE != 0);
     int lastSend = sz - ((loops - 1) * BUF_SIZE);
 
+    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
+    memset(si->buffer, 0, sizeof(si->buffer));
+    si->bytesReceived = 0;
+    si->bytesSent = 0;
+
+    sprintf(si->buffer, "%d", sz);
+
+    WSASend(si->socket, &(si->dataBuf), 1, NULL, 0, &(si->overlapped), clientRoutine);
+
+    // Wait for the send to complete
+    if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
+        fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
+
+    ResetEvent(events[0]);
+
     for (int i = 0; i < loops; i++)
     {
         ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
@@ -567,25 +582,6 @@ void uploadToClient(SocketInformation *si)
 
     // Transfer finished, close file
     fclose(fp);
-
-    /* Send a packet that designates the file transfer is complete */
-
-    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
-    memset(si->buffer, 0, sizeof(si->buffer));
-
-    sprintf(si->buffer, "%s", "COMPLETE");
-
-    si->dataBuf.buf = si->buffer;
-    si->dataBuf.len = BUF_SIZE;
-
-    // Send end-of-transmission indicator
-    WSASend(si->socket, &(si->dataBuf), 1, NULL, 0, &(si->overlapped), clientRoutine);
-
-    // Wait for the send to complete
-    if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
-        fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
-
-    ResetEvent(events[0]);
 }
 
 /*--------------------------------------------------------------------------------------

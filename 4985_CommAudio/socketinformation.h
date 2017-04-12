@@ -1,7 +1,7 @@
 #ifndef SOCKETINFORMATION_H
 #define SOCKETINFORMATION_H
 #include <WinSock2.h>
-#define BUF_SIZE 2048   //size of the buffer parameter for socketInformation
+#define BUF_SIZE 5000   //size of the buffer parameter for socketInformation
 
 // Hold all the information associated with a socket
 typedef struct SocketInformation
