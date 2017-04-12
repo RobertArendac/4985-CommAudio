@@ -37,8 +37,6 @@ private slots:
     void on_srvTrackNextButton_clicked();
     void on_srvTrackStopButton_clicked();
 
-    void on_srvTrackPauseButton_clicked();
-
 private:
     Ui::ServerWindow *ui;
 };

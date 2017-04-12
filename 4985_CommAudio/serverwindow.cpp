@@ -134,24 +134,6 @@ void ServerWindow::on_srvTrackStopButton_clicked()
     resetPrevTrack();
 }
 
-/*--------------------------------------------------------------------------------------
---  INTERFACE:     void ServerWindow::on_srvTrackPauseButton_clicked()
---
---  RETURNS:       void
---
---  DATE:          April 4, 2017
---
---  DESIGNER:      Alex Zielinski
---
---  PROGRAMMER:    Alex Zielinski
---
---  NOTES:
---      Pause audio if audio is playing
----------------------------------------------------------------------------------------*/
-void ServerWindow::on_srvTrackPauseButton_clicked()
-{
-
-}
 
 /*--------------------------------------------------------------------------------------
 --  INTERFACE:     void ServerWindow::playNextTrack()
