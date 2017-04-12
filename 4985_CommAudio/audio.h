@@ -18,7 +18,7 @@
 #define SAMPLERATE 44100
 #define SAMPLESIZE 16
 #define AUDIODATA 44
-#define OFFSET 100000
+#define OFFSET 65000
 
 bool audioPlaying();
 void loopEvent();

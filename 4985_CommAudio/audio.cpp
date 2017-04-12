@@ -32,7 +32,7 @@ int currPos = OFFSET;
 int startPos = 0;
 
 int a = 0;
-int b = 500000;
+int b = OFFSET;
 
 /*--------------------------------------------------------------------------------------
 --  INTERFACE:     bool audioPlaying()
@@ -108,7 +108,6 @@ void initAudioOutput()
 
     // initialize output
     output = new QAudioOutput(format);
-    audioBuffer.open(QIODevice::ReadWrite);
 }
 
 /*--------------------------------------------------------------------------------------
@@ -218,11 +217,13 @@ void loadAudioStream()
 --      Plays audio from stream of data
 ---------------------------------------------------------------------------------------*/
 void playStream()
-{   output->setNotifyInterval(1680000);
+{
     QByteArray tmp;
     QBuffer buf(&tmp);
     buf.open(QIODevice::ReadWrite);
     int i = 0;
+
+    //output->setVolume(0.0);
 
     qDebug() << "start";
 
@@ -234,10 +235,9 @@ void playStream()
             qDebug() << "song done";
             return;
         }
-
+        //memset(chunkToSend, 0, OFFSET);
         tmp.append(chunks[i].data(),chunks[i].size());
-        //audioBuffer.seek(x);
-        //x += chunks[i].size();
+        //strcpy(chunkToSend, chunks[i].data());
 
         output->start(&buf); // play track
         // event loop for track
@@ -246,9 +246,11 @@ void playStream()
         do
         {
             loop.exec();
-            if(audioBuffer.atEnd())
+            if(buf.atEnd())
             {
-               qDebug() << "end " << i;
+                qDebug() << "End";
+                sendAudio(chunks[i].data());
+                qDebug() << "size: " << chunks[i].size();
             }
         } while(output->state() == QAudio::ActiveState);
 
@@ -286,6 +288,6 @@ void stopAudio()
     {
         output->stop(); // stop the audio
         output->reset();
-        audioBuffer.close();
+        //audioBuffer.close();
     }
 }

@@ -154,7 +154,8 @@ void ServerWindow::on_srvTrackStopButton_clicked()
 ---------------------------------------------------------------------------------------*/
 void ServerWindow::on_srvTrackPauseButton_clicked()
 {
-    sendAudio("This is a test");
+    char test[OFFSET] = "asdfdsklfjkldsjfklsadfjkdsljfklas;fjskdl";
+    sendAudio(test);
 }
 
 void ServerWindow::on_srvTrackFFButton_clicked()

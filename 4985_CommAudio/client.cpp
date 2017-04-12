@@ -5,8 +5,16 @@
 #include <QFileDialog>
 #include <QFile>
 #include <QFileInfo>
+#include <QBuffer>
+#include <QIODevice>
+#include <QAudioOutput>
+#include <QAudioFormat>
+#include <QAudioInput>
+#include <QAudioDeviceInfo>
+#include <QEventLoop>
 
 ClientWindow *clientWind;
+QAudioOutput *cltOutput;
 
 SOCKET cltSck;      //Connected TCP socket
 char filename[SONG_SIZE];
@@ -157,7 +165,33 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port)
     SOCKET udpSck;
     struct ip_mreq stMreq;
     int flag = 1;
-    char recvBuff[100];
+    char recvBuff[OFFSET];
+
+    QAudioOutput *output;
+    QByteArray chunkData;
+    QBuffer buf(&chunkData);
+    buf.open(QIODevice::ReadWrite);
+
+    QAudioFormat format;
+
+    // set audio playback formatting
+    format.setSampleSize(16);
+    format.setSampleRate(44100);
+    format.setChannelCount(2);
+    format.setCodec("audio/pcm");
+    format.setByteOrder(QAudioFormat::LittleEndian);
+    format.setSampleType(QAudioFormat::UnSignedInt);
+
+    // setup default output device
+    QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
+    if (!info.isFormatSupported(format))
+    {
+        qDebug() << "raw audio format not supported by backend, cannot play audio.";
+        return;
+    }
+
+    // initialize output
+    cltOutput = new QAudioOutput(format);
 
     if ((udpSck = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET)
     {
@@ -190,13 +224,31 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port)
         return;
     }
 
+    int addrSize = sizeof(struct sockaddr_in);
+
     while (1)
     {
-        int addrSize = sizeof(struct sockaddr_in);
-        recvfrom(udpSck, recvBuff, 100, 0, (struct sockaddr*)&addr, &addrSize);
+        if (recvfrom(udpSck, recvBuff, OFFSET, 0, (struct sockaddr*)&addr, &addrSize) < 0)
+        {
+            qDebug() << "Reading error";
+        }
+        else
+        {
+            qDebug() << "Data read with size: " << sizeof(recvBuff);
+            chunkData.append(recvBuff, OFFSET);
 
-        qDebug() << recvBuff;
-        memset(recvBuff, 0, 100);
+            cltOutput->start(&buf); // play track
+            // event loop for track
+            QEventLoop loop;
+            QObject::connect(cltOutput, SIGNAL(stateChanged(QAudio::State)), &loop, SLOT(quit()));
+            do
+            {
+                loop.exec();
+            } while(cltOutput->state() == QAudio::ActiveState);
+
+            //qDebug() << recvBuff;
+            memset(recvBuff, 0, OFFSET);
+        }
     }
 }
 

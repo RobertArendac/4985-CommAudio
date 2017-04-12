@@ -13,31 +13,14 @@ SOCKET audioSock;
 
 void sendAudio(const char *data)
 {
-    SocketInformation *si;  //Struct holding socket info
-    WSAEVENT events[1];         //Event array
-    //Allocate socket information
-    si = (SocketInformation *)malloc(sizeof(SocketInformation));
-    DWORD result;
-
-    memset(si->audioBuffer, 0, sizeof(si->audioBuffer));
-    strcpy(si->audioBuffer, data);
-    si->socket = audioSock;
-    si->bytesReceived = 0;
-    si->bytesSent = 0;
-    si->dataBuf.len = OFFSET;
-    si->dataBuf.buf = si->audioBuffer;
-
-    WSASendTo(si->socket, &(si->dataBuf), 1, NULL, 0, (SOCKADDR *)&multiDest, sizeof(SOCKADDR_IN), &(si->overlapped), clientRoutine);
-
-    events[0] = WSACreateEvent();
-
-    if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
+    //qDebug() << strlen(data);
+    if (sendto(audioSock, data, OFFSET, 0, (struct sockaddr*)&multiDest, sizeof(multiDest)) < 0)
     {
-        qDebug() <<"WaitForMultipleEvents() failed " << WSAGetLastError();
+        qDebug() << "sendto failed: " << WSAGetLastError();
     }
     else
     {
-        qDebug() << "sent " << si->audioBuffer;
+        qDebug() << "Sent Audio Data";
     }
 }
 
@@ -414,14 +397,9 @@ void runUDPServer(ServerWindow *sw, int port)
     destAddr.sin_addr.s_addr = inet_addr(MCAST_ADDR); /* any interface */
     destAddr.sin_port        = htons(MCAST_PORT);                 /* any port */
 
-    qDebug() << "About to send data";
-    while (1)
-    {
-        if (sendto(udpSck, "test", 5, 0, (struct sockaddr*)&destAddr, sizeof(destAddr)) < 0)
-        {
-            qDebug() << "sendto failed: " << WSAGetLastError();
-        }
-    }
+    audioSock = udpSck;
+    multiDest = destAddr;
+    qDebug() << "Ready to send data";
 }
 
 
