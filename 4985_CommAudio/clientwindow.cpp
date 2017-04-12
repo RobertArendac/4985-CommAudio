@@ -29,9 +29,7 @@ ClientWindow::ClientWindow(QWidget *parent) :
 
     ui->setupUi(this);
     ui->cltStatusLabel->setText("Status: Not connected");
-    // Start a winsock session
-    if (!startWinsock())
-        return;
+
 }
 
 ClientWindow::~ClientWindow()
@@ -56,6 +54,10 @@ ClientWindow::~ClientWindow()
 void ClientWindow::on_cltConnect_clicked()
 {
     ThreadInfo *ti;
+
+    // Start a winsock session
+    if (!startWinsock())
+        return;
 
     ti = (ThreadInfo *)malloc(sizeof(ThreadInfo));
     strcpy(ti->cltIP, ui->cltHostIPEditText->text().toStdString().c_str());
@@ -105,7 +107,7 @@ void ClientWindow::on_cltUpdateButton_clicked()
 ---------------------------------------------------------------------------------------*/
 void ClientWindow::on_cltUploadButton_clicked()
 {
-    uploadSong(QFileDialog::getOpenFileName());
+    uploadSong(QFileDialog::getOpenFileName(this,"Select File",qApp->applicationDirPath(),"Songs (*.wav *.mp3)"));
 }
 
 /*--------------------------------------------------------------------------------------
@@ -246,7 +248,7 @@ void ClientWindow::keyPressEvent(QKeyEvent* e)
     {
         if(e->key() == Qt::Key_K)
         {
-            printf("K was pressed\n"); // temp for testing
+            ui->cltMicLabel->setText("Status: ON");
         }
     }
 }
@@ -272,7 +274,7 @@ void ClientWindow::keyReleaseEvent(QKeyEvent* e)
     {
         if(e->key() == Qt::Key_K)
         {
-            printf("K was released\n"); // temp for testing
+            ui->cltMicLabel->setText("Status: OFF");
         }
     }
 }
