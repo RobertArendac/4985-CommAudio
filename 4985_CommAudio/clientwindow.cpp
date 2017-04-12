@@ -246,7 +246,7 @@ void ClientWindow::keyPressEvent(QKeyEvent* e)
     {
         if(e->key() == Qt::Key_K)
         {
-            ui->cltMicLabel->setText("Status: On");
+            ui->cltMicLabel->setText("Status: ON");
         }
     }
 }
@@ -272,7 +272,7 @@ void ClientWindow::keyReleaseEvent(QKeyEvent* e)
     {
         if(e->key() == Qt::Key_K)
         {
-            ui->cltMicLabel->setText("Status: Off");
+            ui->cltMicLabel->setText("Status: OFF");
         }
     }
 }
