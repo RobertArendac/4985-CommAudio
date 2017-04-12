@@ -9,7 +9,6 @@
 ClientWindow *clientWind;
 
 SOCKET cltSck;      //Connected TCP socket
-char filename[SONG_SIZE];
 
 /*--------------------------------------------------------------------------------------
 --  INTERFACE:     SOCKADDR_IN serverCreateAddress(const char *host, int port)
@@ -368,6 +367,7 @@ void downloadSong(const char *song)
     SocketInformation *si, *test;
     WSAEVENT events[1];
     DWORD result, flags = 0;
+    char filename[SONG_SIZE];
 
     si = (SocketInformation *)malloc(sizeof(SocketInformation));
     test = (SocketInformation *)malloc(sizeof(SocketInformation));
@@ -502,6 +502,7 @@ void uploadSong(QString song)
     DWORD result, flags = 0;
     QFile f(song);
     QFileInfo fi(f.fileName());
+    char filename[SONG_SIZE];
 
     si = (SocketInformation *)malloc(sizeof(SocketInformation));
 
@@ -726,70 +727,6 @@ void CALLBACK sendRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED o
     ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
     memset(si->buffer, 0, sizeof(si->buffer));
 
-}
-
-/*--------------------------------------------------------------------------------------
---  INTERFACE:     void CALLBACK downloadRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
---                     DWORD error: Error that occured during WSASend()
---                     DWORD bytesTransferred: Amount of bytes sent
---                     LPWSAOVERLAPPED overlapped: Pointer to overlapped struct
---                     DWORD flags: flags for receiving
---
---  RETURNS:       void
---
---  DATE:          April 3, 2017
---
---  DESIGNER:      Robert Arendac
---
---  PROGRAMMER:    Robert Arendac
---
---  NOTES:
---      Completion routine for downloading a song.  Receives each packet and appends it
---      to the save file
----------------------------------------------------------------------------------------*/
-void CALLBACK downloadRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags)
-{
-    SocketInformation *si = (SocketInformation *)overlapped;
-    FILE *fp;
-
-    // Check for error or close connection request
-    if (error != 0 || bytesTransferred == 0)
-    {
-        if (error)
-        {
-            fprintf(stderr, "Error: %d\n", error);
-        }
-        fprintf(stderr, "Closing socket: %d\n", (int)si->socket);
-        closesocket(si->socket);
-        return;
-    }
-
-    si->bytesReceived = bytesTransferred;
-    si->bytesSent = 0;
-
-    // Check for end of transmission
-    if (strcmp(si->dataBuf.buf, "COMPLETE") == 0)
-    {
-        ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
-        memset(si->buffer, 0, sizeof(si->buffer));
-
-        si->dataBuf.len = BUF_SIZE;
-        si->dataBuf.buf = si->buffer;
-        return;
-    }
-    //Write chunk to file
-    fp = fopen(filename, "a+b");
-    fwrite(si->dataBuf.buf, 1, bytesTransferred, fp);
-    fclose(fp);
-
-    // Reset buffers for next receive
-    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
-    memset(si->buffer, 0, sizeof(si->buffer));
-
-    si->dataBuf.len = BUF_SIZE;
-    si->dataBuf.buf = si->buffer;
-
-    WSARecv(si->socket, &(si->dataBuf), 1, NULL, &flags, &(si->overlapped), downloadRoutine);
 }
 
 /*--------------------------------------------------------------------------------------
