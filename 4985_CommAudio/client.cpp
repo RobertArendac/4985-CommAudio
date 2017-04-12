@@ -431,7 +431,7 @@ void downloadSong(const char *song)
     test->dataBuf.len = BUF_SIZE;
     test->dataBuf.buf = test->buffer;
 
-    // Receives song file
+    // Receives song size
     WSARecv(test->socket, &(test->dataBuf), 1, NULL, &flags, &(test->overlapped), pickRoutine);
     if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
         fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
@@ -447,6 +447,7 @@ void downloadSong(const char *song)
     test->dataBuf.len = BUF_SIZE;
     test->dataBuf.buf = test->buffer;
 
+    fp = fopen(filename, "a+b");
     while (totalBytes < size)
     {
         // Receives song file
@@ -456,9 +457,7 @@ void downloadSong(const char *song)
         ResetEvent(events[0]);
 
         //Write chunk to file
-        fp = fopen(filename, "a+b");
         fwrite(test->dataBuf.buf, 1, test->bytesReceived, fp);
-        fclose(fp);
 
         totalBytes += test->bytesReceived;
 
@@ -468,9 +467,8 @@ void downloadSong(const char *song)
 
         test->dataBuf.len = BUF_SIZE;
         test->dataBuf.buf = test->buffer;
-
-
     }
+    fclose(fp);
 
     // Notify user download is complete, could probably be refined into something better
     QMessageBox msg(QMessageBox::Information, "Notice:", "Download complete!");
@@ -572,6 +570,21 @@ void uploadSong(QString song)
     loops = sz / BUF_SIZE + (sz % BUF_SIZE != 0);
     int lastSend = sz - ((loops - 1) * BUF_SIZE);
 
+    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
+    memset(si->buffer, 0, sizeof(si->buffer));
+    si->bytesReceived = 0;
+    si->bytesSent = 0;
+
+    sprintf(si->buffer, "%d", sz);
+
+    WSASend(si->socket, &(si->dataBuf), 1, NULL, 0, &(si->overlapped), clientRoutine);
+
+    // Wait for the send to complete
+    if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
+        fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
+
+    ResetEvent(events[0]);
+
     for (int i = 0; i < loops; i++)
     {
         ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
@@ -604,24 +617,6 @@ void uploadSong(QString song)
     }
 
     fclose(fp);
-
-    /* Send a packet that designates the file transfer is complete */
-
-    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
-    memset(si->buffer, 0, sizeof(si->buffer));
-
-    sprintf(si->buffer, "%s", "COMPLETE");
-
-    si->dataBuf.buf = si->buffer;
-    si->dataBuf.len = BUF_SIZE;
-
-    WSASend(si->socket, &(si->dataBuf), 1, NULL, 0, &(si->overlapped), clientRoutine);
-
-    // Wait for the send to complete
-    if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
-        fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
-
-    ResetEvent(events[0]);
 
     // Reset buffers to receive updated song list
     ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
@@ -830,9 +825,6 @@ void CALLBACK pickRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED o
         closesocket(si->socket);
         return;
     }
-
-    if (bytesTransferred != BUF_SIZE)
-        qDebug() << "sdf";
 
     si->bytesReceived = bytesTransferred;
 }
