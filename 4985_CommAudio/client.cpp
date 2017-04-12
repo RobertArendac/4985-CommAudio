@@ -396,7 +396,7 @@ void downloadSong(const char *song)
     si->dataBuf.len = BUF_SIZE;
     si->dataBuf.buf = si->buffer;
 
-    // Sends the song name
+    // Sends the request type
     WSASend(si->socket, &(si->dataBuf), 1, NULL, 0, &(si->overlapped), sendRoutine);
 
     // Wait for the send to complete
@@ -431,11 +431,46 @@ void downloadSong(const char *song)
     test->dataBuf.len = BUF_SIZE;
     test->dataBuf.buf = test->buffer;
 
-
     // Receives song file
-    WSARecv(test->socket, &(test->dataBuf), 1, NULL, &flags, &(test->overlapped), downloadRoutine);
+    WSARecv(test->socket, &(test->dataBuf), 1, NULL, &flags, &(test->overlapped), pickRoutine);
     if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
         fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
+    ResetEvent(events[0]);
+
+    int size = atoi(test->dataBuf.buf);
+    int totalBytes = 0;
+
+    // Reset buffers for next receive
+    ZeroMemory(&(test->overlapped), sizeof(WSAOVERLAPPED));
+    memset(test->buffer, 0, sizeof(test->buffer));
+
+    test->dataBuf.len = BUF_SIZE;
+    test->dataBuf.buf = test->buffer;
+
+    while (totalBytes < size)
+    {
+        // Receives song file
+        WSARecv(test->socket, &(test->dataBuf), 1, NULL, &flags, &(test->overlapped), pickRoutine);
+        if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
+            fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
+        ResetEvent(events[0]);
+
+        //Write chunk to file
+        fp = fopen(filename, "a+b");
+        fwrite(test->dataBuf.buf, 1, test->bytesReceived, fp);
+        fclose(fp);
+
+        totalBytes += test->bytesReceived;
+
+        // Reset buffers for next receive
+        ZeroMemory(&(test->overlapped), sizeof(WSAOVERLAPPED));
+        memset(test->buffer, 0, sizeof(test->buffer));
+
+        test->dataBuf.len = BUF_SIZE;
+        test->dataBuf.buf = test->buffer;
+
+
+    }
 
     // Notify user download is complete, could probably be refined into something better
     QMessageBox msg(QMessageBox::Information, "Notice:", "Download complete!");
@@ -795,4 +830,9 @@ void CALLBACK pickRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED o
         closesocket(si->socket);
         return;
     }
+
+    if (bytesTransferred != BUF_SIZE)
+        qDebug() << "sdf";
+
+    si->bytesReceived = bytesTransferred;
 }
