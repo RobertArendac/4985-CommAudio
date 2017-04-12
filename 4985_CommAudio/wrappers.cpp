@@ -1,8 +1,6 @@
 /*---------------------------------------------------------------------------------------
 --	SOURCE FILE:	wrappers.cpp
 --
---	FUNCTIONS:      int startWinsock()
---
 --	DATE:			March 3, 2017
 --
 --	DESIGNERS:		Robert Arendac

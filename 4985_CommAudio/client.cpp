@@ -1,3 +1,16 @@
+/*---------------------------------------------------------------------------------------
+--	SOURCE FILE:	client.cpp
+--
+--	DATE:			March 19, 2017
+--
+--	DESIGNERS:      Robert Arendac
+--
+--	PROGRAMMERS:    Robert Arendac, Alex Zielinski, Matt Goerwell
+--
+--	NOTES:
+--      Contians network related functions that a client will need to perform
+---------------------------------------------------------------------------------------*/
+
 #include "client.h"
 #include "server.h"
 #include <WS2tcpip.h>

@@ -1,3 +1,16 @@
+/*---------------------------------------------------------------------------------------
+--	SOURCE FILE:	server.cpp
+--
+--	DATE:			March 19, 2017
+--
+--	DESIGNERS:      Robert Arendac
+--
+--	PROGRAMMERS:    Robert Arendac, Alex Zielinski, Matt Goerwell
+--
+--	NOTES:
+--      Contians network related functions that a server will need to perform
+---------------------------------------------------------------------------------------*/
+
 #include "server.h"
 #include "client.h"
 #include "audio.h"
@@ -10,9 +23,25 @@ ServerWindow *servWin;
 SOCKADDR_IN multiDest;
 SOCKET audioSock;
 
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void sendAudio(const char *data)
+--                     const char *data: Audio data to send
+--
+--  RETURNS:       void
+--
+--  DATE:          April 11, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      Function to send audio data passed in via parameter through a UDP socket
+---------------------------------------------------------------------------------------*/
 void sendAudio(const char *data)
 {
-    //qDebug() << strlen(data);
+    // send data and error check
     if (sendto(audioSock, data, OFFSET, 0, (struct sockaddr*)&multiDest, sizeof(multiDest)) < 0)
     {
         qDebug() << "sendto failed: " << WSAGetLastError();
@@ -58,7 +87,7 @@ SOCKADDR_IN serverCreateAddress(int port)
 --
 --  DATE:          March 19, 2017
 --
---  MODIFIED:      March 29, 2017 - Made function return an int ~ AZ
+--  MODIFIED:      March 29, 2017 - Made function return int ~ AZ
 --
 --  DESIGNER:      Robert Arendac
 --
@@ -340,10 +369,11 @@ void selectSong(SocketInformation *si)
 --
 --  MODIFIED:      March 28, 2017 - Added multicasting capabilities
 --                 March 29, 2017 - Made function return an int ~ AZ
+--                 April 11, 2017 - Re-structered UDP socket to fix bug ~ RA, AZ
 --
 --  DESIGNER:      Robert Arendac
 --
---  PROGRAMMER:    RobertArendac, Alex Zielinski
+--  PROGRAMMER:    Robert Arendac, Alex Zielinski
 --
 --  NOTES:
 --      Starts up a UDP server.  Will be responsible for streaming audio.  Also sets up
@@ -351,31 +381,36 @@ void selectSong(SocketInformation *si)
 ---------------------------------------------------------------------------------------*/
 void runUDPServer(ServerWindow *sw, int port)
 {
-    SOCKADDR_IN addr, destAddr; //Addresses to receive from and send to
+    SOCKADDR_IN addr, destAddr;
     SOCKET udpSck;
     int flag = 0;
     struct ip_mreq stMreq;
     u_long ttl = MCAST_TTL;
 
+    // create socket and error check
     if ((udpSck = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET)
     {
         qDebug() << "failed to create socket " << WSAGetLastError();
         return;
     }
 
-    addr.sin_family      = AF_INET;
+    // set socket addr struct
+    addr.sin_family      = AF_INET; // ip_v4
     addr.sin_addr.s_addr = htonl(INADDR_ANY); /* any interface */
     addr.sin_port        = 0;                 /* any port */
 
+    // bind socket and error check
     if (bind(udpSck, (struct sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR)
     {
         qDebug() << "Bind failed: " << WSAGetLastError();
         return;
     }
 
+    // set multicast interface
     stMreq.imr_multiaddr.s_addr = inet_addr(MCAST_ADDR);
     stMreq.imr_interface.s_addr = INADDR_ANY;
 
+    /* set socket multicast options and error check */
     if (setsockopt(udpSck, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&stMreq, sizeof(stMreq)) == SOCKET_ERROR)
     {
         qDebug() << "setsockopt failed: " << WSAGetLastError();
@@ -394,6 +429,7 @@ void runUDPServer(ServerWindow *sw, int port)
         return;
     }
 
+    // set destination addr struct
     destAddr.sin_family      = AF_INET;
     destAddr.sin_addr.s_addr = inet_addr(MCAST_ADDR); /* any interface */
     destAddr.sin_port        = htons(MCAST_PORT);                 /* any port */

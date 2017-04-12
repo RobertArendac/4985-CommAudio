@@ -1,8 +1,6 @@
 /*---------------------------------------------------------------------------------------
 --	SOURCE FILE:	main.cpp
 --
---	FUNCTIONS:      int main(int argc, char *argv[])
---
 --	DATE:			March 3, 2017
 --
 --	DESIGNERS:		Qt

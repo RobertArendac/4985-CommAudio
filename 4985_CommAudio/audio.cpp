@@ -1,13 +1,6 @@
 /*---------------------------------------------------------------------------------------
 --	SOURCE FILE:	clientwindow.cpp
 --
---	FUNCTIONS:      void initAudioOutput();
---                  void play(QString filePath);
---                  void loadAudioData(QString filePath);
---                  void loadAudioStream();
---                  void playStream();
---
---
 --	DATE:			April 8, 2017
 --
 --	DESIGNERS:      Alex Zielinski
@@ -28,12 +21,10 @@ QByteArray audioByteData;
 QString prevTrack;
 QString currTrack;
 QVector<QByteArray> chunks(10);
-int currPos = OFFSET;
-int startPos = 0;
 int stopFlag = 0;
 
-int a = 0;
-int b = OFFSET;
+int startPos = 0;
+int len = OFFSET;
 
 /*--------------------------------------------------------------------------------------
 --  INTERFACE:     bool audioPlaying()
@@ -183,25 +174,27 @@ void loadAudioData(QString filePath)
 --  PROGRAMMER:    Alex Zielinski
 --
 --  NOTES:
---      Plays audio from stream of data
+--      Loads chunks of data into circular buffer (vector)
 ---------------------------------------------------------------------------------------*/
 void loadAudioStream()
 {
     QByteArray tempData;
 
-    if(!chunks.isEmpty())
+    if(!chunks.isEmpty()) // check if vector has data
     {
-        chunks.clear();
+        chunks.clear(); // clear the vector of audio chunks
         qDebug() << "cleared";
     }
 
+    // circularbuffer
     for (int i = 0; i < 10; i++)
     {
-        tempData = audioByteData.mid(a, b);
+        // add audio chunks to vector
+        tempData = audioByteData.mid(startPos, len);
         chunks.push_back(tempData);
         tempData.clear();
 
-        a += b;
+        startPos += len;
     }
 }
 
@@ -221,16 +214,14 @@ void loadAudioStream()
 ---------------------------------------------------------------------------------------*/
 void playStream()
 {
-    QByteArray tmp;
-    QBuffer buf(&tmp);
-    buf.open(QIODevice::ReadWrite);
-    int i = 0;
-
-    qDebug() << "start";
+    QByteArray tmp; // tmp array to hold data chunk
+    QBuffer buf(&tmp); // create QBuffer based off of tmp
+    buf.open(QIODevice::ReadWrite); // open bffer as QIODevice
+    int i = 0; // while loop counter
 
     while(i < 10)
     {
-        if(stopFlag == 1)
+        if(stopFlag == 1) // if user clicked stopped. clear buffers
         {
             output->stop();
             audioByteData.clear();
@@ -240,9 +231,8 @@ void playStream()
             return;
         }
 
-        //memset(chunkToSend, 0, OFFSET);
+        // appends chunk of data to play
         tmp.append(chunks[i].data(),chunks[i].size());
-        //strcpy(chunkToSend, chunks[i].data());
 
         output->start(&buf); // play track
         // event loop for track
@@ -284,7 +274,7 @@ void playStream()
 --  PROGRAMMER:    Alex Zielinski
 --
 --  NOTES:
---      Stops audio from playing
+--      Stops audio from playing. Set flag to false
 ---------------------------------------------------------------------------------------*/
 void stopAudio()
 {
