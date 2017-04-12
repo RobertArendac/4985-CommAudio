@@ -29,9 +29,7 @@ ClientWindow::ClientWindow(QWidget *parent) :
 
     ui->setupUi(this);
     ui->cltStatusLabel->setText("Status: Not connected");
-    // Start a winsock session
-    if (!startWinsock())
-        return;
+
 }
 
 ClientWindow::~ClientWindow()
@@ -57,6 +55,10 @@ void ClientWindow::on_cltConnect_clicked()
 {
     ThreadInfo *ti;
 
+    // Start a winsock session
+    if (!startWinsock())
+        return;
+
     ti = (ThreadInfo *)malloc(sizeof(ThreadInfo));
     strcpy(ti->cltIP, ui->cltHostIPEditText->text().toStdString().c_str());
     ti->TCPPort = ui->cltTCPPortSpinner->value();
@@ -65,7 +67,7 @@ void ClientWindow::on_cltConnect_clicked()
 
     runTCPClient(this, ti->cltIP, ti->TCPPort);
 
-    //CreateThread(NULL, 0, ClientWindow::udpClientThread, (void *)ti, 0, NULL);
+    CreateThread(NULL, 0, ClientWindow::udpClientThread, (void *)ti, 0, NULL);
 
 }
 

@@ -143,23 +143,6 @@ DWORD WINAPI tcpClient(void *arg)
         if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
             fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
         ResetEvent(events[0]);
-
-        if (strcmp("pick", si->buffer) == 0)
-        {
-            selectSong(si);
-        }
-        else if (strcmp("dl", si->buffer) == 0)
-        {
-            uploadToClient(si);
-        }
-        else if (strcmp("ul", si->buffer) == 0)
-        {
-            downloadFromClient(si);
-        }
-        else if (strcmp("update", si->buffer) == 0)
-        {
-           sendSongs(si);
-        }
     }
 
     return 0;
@@ -271,6 +254,23 @@ void CALLBACK parseRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
         removeSocket(si->socket);
         return;
     }
+
+    if (strcmp("pick", si->buffer) == 0)
+    {
+        selectSong(si);
+    }
+    else if (strcmp("dl", si->buffer) == 0)
+    {
+        uploadToClient(si);
+    }
+    else if (strcmp("ul", si->buffer) == 0)
+    {
+        downloadFromClient(si);
+    }
+    else if (strcmp("update", si->buffer) == 0)
+    {
+       sendSongs(si);
+    }
 }
 
 /*--------------------------------------------------------------------------------------
@@ -313,7 +313,7 @@ void selectSong(SocketInformation *si)
 
 
 /*--------------------------------------------------------------------------------------
---  INTERFACE:     void runTCPServer(ServerWindow *sw, int port)
+--  INTERFACE:     void runUDPServer(ServerWindow *sw, int port)
 --                     ServerWindow *sw: GUI to update
 --                     int port: port to bind to
 --
@@ -424,7 +424,9 @@ void runUDPServer(ServerWindow *sw, int port)
 --
 --  DESIGNER:      Robert Arendac
 --
---  PROGRAMMER:    RobertArendac, Alex Zielinski
+--  PROGRAMMER:    Robert Arendac
+--
+--  MODIFIED:      April 11, file size is sent over now instead of using an end-of-transmission indicator
 --
 --  NOTES:
 --      Downloads a song from the client and adds it to the music list
@@ -489,9 +491,12 @@ void downloadFromClient(SocketInformation *si)
     si->dataBuf.len = BUF_SIZE;
     si->dataBuf.buf = si->buffer;
 
+    // Open file for appending
     fp = fopen(filepath, "a+b");
     if (fp == NULL)
         qDebug() << errno;
+
+    // Read while the total file size hasn't been transferred
     while (totalBytes < size)
     {
         // Receives song file
@@ -501,9 +506,9 @@ void downloadFromClient(SocketInformation *si)
         ResetEvent(events[0]);
 
         //Write chunk to file
-
         fwrite(si->dataBuf.buf, 1, si->bytesReceived, fp);
 
+        // Increment bytes received
         totalBytes += si->bytesReceived;
 
         // Reset buffers for next receive
@@ -513,6 +518,8 @@ void downloadFromClient(SocketInformation *si)
         si->dataBuf.len = BUF_SIZE;
         si->dataBuf.buf = si->buffer;
     }
+
+    // Transmission done, close file
     fclose(fp);
 
     // Notify user download is complete, could probably be refined into something better
@@ -535,7 +542,7 @@ void downloadFromClient(SocketInformation *si)
 --
 --  DESIGNER:      Robert Arendac
 --
---  PROGRAMMER:    RobertArendac, Alex Zielinski
+--  PROGRAMMER:    RobertArendac
 --
 --  NOTES:
 --      Uploads a song to the client
@@ -578,6 +585,7 @@ void uploadToClient(SocketInformation *si)
 
     sprintf(si->buffer, "%d", sz);
 
+    // Send file size
     WSASend(si->socket, &(si->dataBuf), 1, NULL, 0, &(si->overlapped), clientRoutine);
 
     // Wait for the send to complete
