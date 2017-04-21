@@ -118,10 +118,8 @@ void runTCPServer(ServerWindow *sw, int port)
 DWORD WINAPI tcpClient(void *arg)
 {
     SOCKET *clientSck = (SOCKET *)arg;      //Client socket
-    DWORD flags = 0;  //Bytes to be sent
+    DWORD flags = 0;                        //Bytes to be sent
     SocketInformation *si;                  //Struct holding socket info
-    WSAEVENT events[1];                     //Array of events (just one)
-    DWORD result;                           //Result of waiting for event
 
     // Fill out the socket info
     si = (SocketInformation *)malloc(sizeof(SocketInformation));
@@ -130,7 +128,6 @@ DWORD WINAPI tcpClient(void *arg)
     sendSongs(si);
 
     //Client request Parse loop
-    events[0] = WSACreateEvent();
     while (true)
     {
         ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
@@ -139,10 +136,9 @@ DWORD WINAPI tcpClient(void *arg)
         si->bytesSent = 0;
         si->dataBuf.len = BUF_SIZE;
         si->dataBuf.buf = si->buffer;
-        WSARecv(si->socket, &(si->dataBuf), 1, NULL, &flags, &(si->overlapped), parseRoutine);
-        if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
-            fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
-        ResetEvent(events[0]);
+
+        if (!recvData(si, &flags, parseRoutine))
+            exit(1);
     }
 
     return 0;
@@ -166,9 +162,7 @@ DWORD WINAPI tcpClient(void *arg)
 void sendSongs(SocketInformation *si)
 {
     char music[SONG_SIZE];              //C-string of songs
-    WSAEVENT events[1];                 //Array of events (just one)
     std::string songlist;               //String of all songs
-    DWORD result;
 
     // Build the song list
     QStringList songs = ServerWindow::getSongs();
@@ -188,13 +182,8 @@ void sendSongs(SocketInformation *si)
     si->dataBuf.len = BUF_SIZE;
     si->dataBuf.buf = si->buffer;
 
-    // Send the song list
-    WSASend(si->socket, &(si->dataBuf), 1, NULL, 0, &(si->overlapped), clientRoutine);
-
-    // Wait for the send to complete
-    events[0] = WSACreateEvent();
-    if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
-        fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
+    if (!sendData(si, clientRoutine))
+        exit(1);
 }
 
 /*--------------------------------------------------------------------------------------
@@ -290,8 +279,8 @@ void CALLBACK parseRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
 ---------------------------------------------------------------------------------------*/
 void selectSong(SocketInformation *si)
 {
-    DWORD result, flags = 0;
-    WSAEVENT events[1];
+    DWORD flags = 0;
+
     ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
     memset(si->buffer, 0, sizeof(si->buffer));
     si->bytesReceived = 0;
@@ -300,12 +289,8 @@ void selectSong(SocketInformation *si)
     si->dataBuf.buf = si->buffer;
 
     // Receive the song
-    WSARecv(si->socket, &(si->dataBuf), 1, NULL, &flags, &(si->overlapped), clientRoutine);
-
-    // Wait for the receive to complete
-    events[0] = WSACreateEvent();
-    if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
-        fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
+    if (!recvData(si, &flags, clientRoutine))
+        exit(1);
 
     //temporary until I know how song selection works. replace this with playing the song, once ALEX has it ready.
     fprintf(stdout,"Song name: %s\n",si->buffer);
@@ -433,8 +418,7 @@ void runUDPServer(ServerWindow *sw, int port)
 ---------------------------------------------------------------------------------------*/
 void downloadFromClient(SocketInformation *si)
 {
-    WSAEVENT events[1];
-    DWORD result, flags = 0;
+    DWORD flags = 0;
     char filepath[SONG_SIZE];
 
     // Get the save location
@@ -450,13 +434,8 @@ void downloadFromClient(SocketInformation *si)
     si->dataBuf.buf = si->buffer;
 
     // Receives the song name
-    WSARecv(si->socket, &(si->dataBuf), 1, NULL, &flags, &(si->overlapped), clientRoutine);
-
-    events[0] = WSACreateEvent();
-    if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
-        fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
-
-    ResetEvent(events[0]);
+    if (!recvData(si, &flags, clientRoutine))
+        exit(1);
 
     // Add the songname to the filepath
     strcat(filepath, si->dataBuf.buf);
@@ -475,11 +454,8 @@ void downloadFromClient(SocketInformation *si)
     si->dataBuf.buf = si->buffer;
 
     // Receives the song size
-    WSARecv(si->socket, &(si->dataBuf), 1, NULL, &flags, &(si->overlapped), clientRoutine);
-    if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
-        fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
-
-    ResetEvent(events[0]);
+    if (!recvData(si, &flags, clientRoutine))
+        exit(1);
 
     int size = atoi(si->dataBuf.buf);
     int totalBytes = 0;
@@ -500,10 +476,8 @@ void downloadFromClient(SocketInformation *si)
     while (totalBytes < size)
     {
         // Receives song file
-        WSARecv(si->socket, &(si->dataBuf), 1, NULL, &flags, &(si->overlapped), pickRoutine);
-        if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
-            fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
-        ResetEvent(events[0]);
+        if (!recvData(si, &flags, pickRoutine))
+            exit(1);
 
         //Write chunk to file
         fwrite(si->dataBuf.buf, 1, si->bytesReceived, fp);
@@ -549,19 +523,12 @@ void downloadFromClient(SocketInformation *si)
 ---------------------------------------------------------------------------------------*/
 void uploadToClient(SocketInformation *si)
 {
-    DWORD result, flags = 0;
-    WSAEVENT events[1];
+    DWORD flags = 0;
     char musicPath[SONG_SIZE] = "../Music/";
 
     // Receive the name of the song to upload
-    WSARecv(si->socket, &(si->dataBuf), 1, NULL, &flags, &(si->overlapped), clientRoutine);
-
-    //Wait for receive to complete
-    events[0] = WSACreateEvent();
-    if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
-        fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
-
-    ResetEvent(events[0]);
+    if (!recvData(si, &flags, clientRoutine))
+        exit(1);
 
     // Add the file name to the filepath
     strcat(musicPath, si->dataBuf.buf);
@@ -586,13 +553,8 @@ void uploadToClient(SocketInformation *si)
     sprintf(si->buffer, "%d", sz);
 
     // Send file size
-    WSASend(si->socket, &(si->dataBuf), 1, NULL, 0, &(si->overlapped), clientRoutine);
-
-    // Wait for the send to complete
-    if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
-        fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
-
-    ResetEvent(events[0]);
+    if (!sendData(si, clientRoutine))
+        exit(1);
 
     for (int i = 0; i < loops; i++)
     {
@@ -616,13 +578,8 @@ void uploadToClient(SocketInformation *si)
         }
 
         // Send a single packet
-        WSASend(si->socket, &(si->dataBuf), 1, NULL, 0, &(si->overlapped), clientRoutine);
-
-        // Wait for the send to complete
-        if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
-            fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
-
-        ResetEvent(events[0]);
+        if (!sendData(si, clientRoutine))
+            exit(1);
     }
 
     // Transfer finished, close file

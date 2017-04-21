@@ -206,7 +206,8 @@ int setCltOptions(SOCKET sck, int option, char *optval)
 --  NOTES:
 --      Creates a new socket for either UDP or TCP connections
 ---------------------------------------------------------------------------------------*/
-SOCKET createSocket(int type, int protocol) {
+SOCKET createSocket(int type, int protocol)
+{
     SOCKET s;
 
     if ((s = WSASocket(AF_INET, type, protocol, NULL, 0, WSA_FLAG_OVERLAPPED)) == INVALID_SOCKET) {
@@ -215,4 +216,46 @@ SOCKET createSocket(int type, int protocol) {
     }
 
     return s;
+}
+
+int recvData(SocketInformation *si, DWORD *flags, LPWSAOVERLAPPED_COMPLETION_ROUTINE routine)
+{
+    WSAEVENT event[1];
+
+    if (WSARecv(si->socket, &(si->dataBuf), 1, NULL, flags, &(si->overlapped), routine) == SOCKET_ERROR)
+    {
+        qDebug() << "WSARecv failed: error " << WSAGetLastError();
+        return 0;
+    }
+
+    event[0] = WSACreateEvent();
+
+    if (WSAWaitForMultipleEvents(1, event, FALSE, WSA_INFINITE, TRUE) != WAIT_IO_COMPLETION)
+    {
+        qDebug() << "WaitForMultipleEvents() failed: " << WSAGetLastError();
+        return 0;
+    }
+
+    return 1;
+}
+
+int sendData(SocketInformation *si, LPWSAOVERLAPPED_COMPLETION_ROUTINE routine)
+{
+    WSAEVENT event[1];
+
+    if (WSASend(si->socket, &(si->dataBuf), 1, NULL, 0, &(si->overlapped), routine) == SOCKET_ERROR)
+    {
+        qDebug() << "WSASend failed: error " << WSAGetLastError();
+        return 0;
+    }
+
+    event[0] = WSACreateEvent();
+
+    if (WSAWaitForMultipleEvents(1, event, FALSE, WSA_INFINITE, TRUE) != WAIT_IO_COMPLETION)
+    {
+        qDebug() << "WaitForMultipleEvents() failed: " << WSAGetLastError();
+        return 0;
+    }
+
+    return 1;
 }
