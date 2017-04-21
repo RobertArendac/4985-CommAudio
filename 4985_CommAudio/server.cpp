@@ -1,5 +1,6 @@
 #include "server.h"
 #include "client.h"
+#include "callbacks.h"
 #include <map>
 #include <QDebug>
 #include <WS2tcpip.h>
@@ -174,82 +175,6 @@ void sendSongs(SocketInformation *si)
 
     if (!sendData(si, clientRoutine))
         exit(1);
-}
-
-/*--------------------------------------------------------------------------------------
---  INTERFACE:     void CALLBACK clientRoutine(DWORD error, DWORD, LPWSAOVERLAPPED, DWORD)
---                     DWORD error: error that occured during WSASend()
---                     Other args unused
---
---  RETURNS:       void
---
---  DATE:          March 29, 2017
---
---  DESIGNER:      Robert Arendac
---
---  PROGRAMMER:    Robert Arendac
---
---  NOTES:
---      Completion routine for sending song list.  In this case, we just want to check
---      for error.
----------------------------------------------------------------------------------------*/
-void CALLBACK clientRoutine(DWORD error, DWORD, LPWSAOVERLAPPED, DWORD)
-{
-    if (error)
-    {
-        fprintf(stderr, "Error: %d\n", error);
-    }
-}
-
-/*--------------------------------------------------------------------------------------
---  INTERFACE:     void CALLBACK parseRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD)
---                     DWORD error: error that occured during WSARecv()
---                     DWORD bytesTransferred: the number of bytes received
---                     LPWSAOVERLAPPED overlapped: pointer to overlapped struct
---                     Other arg unused
---
---  RETURNS:       void
---
---  DATE:          April 7, 2017
---
---  DESIGNER:      Matt Goerwell
---
---  PROGRAMMER:    Matt Goerwell
---
---  NOTES:
---      Completion routine for receiving a client request.  Checks for errors, then parses the
---      request type made and proceeds to the appropriate method.
----------------------------------------------------------------------------------------*/
-void CALLBACK parseRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD)
-{
-    SocketInformation *si = (SocketInformation *)overlapped;
-    // Check for error or close connection request
-    if (error != 0 || bytesTransferred == 0)
-    {
-        if (error)
-        {
-            fprintf(stderr, "Error: %d\n", error);
-        }
-        removeSocket(si->socket);
-        return;
-    }
-
-    if (strcmp("pick", si->buffer) == 0)
-    {
-        selectSong(si);
-    }
-    else if (strcmp("dl", si->buffer) == 0)
-    {
-        uploadToClient(si);
-    }
-    else if (strcmp("ul", si->buffer) == 0)
-    {
-        downloadFromClient(si);
-    }
-    else if (strcmp("update", si->buffer) == 0)
-    {
-       sendSongs(si);
-    }
 }
 
 /*--------------------------------------------------------------------------------------

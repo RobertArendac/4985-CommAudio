@@ -32,8 +32,4 @@ void sendSongs(SocketInformation *si);
 void uploadToClient(SocketInformation *si);
 void downloadFromClient(SocketInformation *si);
 
-//callback functions
-void CALLBACK clientRoutine(DWORD error, DWORD, LPWSAOVERLAPPED, DWORD);
-void CALLBACK parseRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD);
-
 #endif // SERVER_H
