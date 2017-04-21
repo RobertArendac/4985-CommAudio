@@ -259,3 +259,13 @@ int sendData(SocketInformation *si, LPWSAOVERLAPPED_COMPLETION_ROUTINE routine)
 
     return 1;
 }
+
+void resetBuffers(SocketInformation *si)
+{
+    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
+    memset(si->buffer, 0, sizeof(si->buffer));
+    si->bytesReceived = 0;
+    si->bytesSent = 0;
+    si->dataBuf.len = BUF_SIZE;
+    si->dataBuf.buf = si->buffer;
+}

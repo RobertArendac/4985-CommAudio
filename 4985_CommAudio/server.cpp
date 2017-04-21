@@ -130,12 +130,7 @@ DWORD WINAPI tcpClient(void *arg)
     //Client request Parse loop
     while (true)
     {
-        ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
-        memset(si->buffer, 0, sizeof(si->buffer));
-        si->bytesReceived = 0;
-        si->bytesSent = 0;
-        si->dataBuf.len = BUF_SIZE;
-        si->dataBuf.buf = si->buffer;
+        resetBuffers(si);
 
         if (!recvData(si, &flags, parseRoutine))
             exit(1);
@@ -174,13 +169,8 @@ void sendSongs(SocketInformation *si)
     // Copy the song list to a c-string, can't send std::string
     strcpy(music, songlist.c_str());
 
-    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
-    memset(si->buffer, 0, sizeof(si->buffer));
+    resetBuffers(si);
     strcpy(si->buffer, music);
-    si->bytesReceived = 0;
-    si->bytesSent = 0;
-    si->dataBuf.len = BUF_SIZE;
-    si->dataBuf.buf = si->buffer;
 
     if (!sendData(si, clientRoutine))
         exit(1);
@@ -281,12 +271,7 @@ void selectSong(SocketInformation *si)
 {
     DWORD flags = 0;
 
-    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
-    memset(si->buffer, 0, sizeof(si->buffer));
-    si->bytesReceived = 0;
-    si->bytesSent = 0;
-    si->dataBuf.len = BUF_SIZE;
-    si->dataBuf.buf = si->buffer;
+    resetBuffers(si);
 
     // Receive the song
     if (!recvData(si, &flags, clientRoutine))
@@ -375,12 +360,7 @@ void runUDPServer(ServerWindow *sw, int port)
 
     //Fill in the socket info
     si->socket = acceptSocket;
-    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
-    memset(si->buffer, 0, sizeof(si->buffer));
-    si->bytesReceived = 0;
-    si->bytesSent = 0;
-    si->dataBuf.len = BUF_SIZE;
-    si->dataBuf.buf = si->buffer;
+    resetBuffers(si);
 
     while (1)
     {
@@ -426,12 +406,7 @@ void downloadFromClient(SocketInformation *si)
     strcpy(filepath, "../Music/");
 
     // Reset buffers in preparation to receive
-    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
-    memset(si->buffer, 0, sizeof(si->buffer));
-    si->bytesReceived = 0;
-    si->bytesSent = 0;
-    si->dataBuf.len = BUF_SIZE;
-    si->dataBuf.buf = si->buffer;
+    resetBuffers(si);
 
     // Receives the song name
     if (!recvData(si, &flags, clientRoutine))
@@ -446,12 +421,7 @@ void downloadFromClient(SocketInformation *si)
     fclose(fp);
 
     // Reset buffers in preparation to receive
-    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
-    memset(si->buffer, 0, sizeof(si->buffer));
-    si->bytesReceived = 0;
-    si->bytesSent = 0;
-    si->dataBuf.len = BUF_SIZE;
-    si->dataBuf.buf = si->buffer;
+    resetBuffers(si);
 
     // Receives the song size
     if (!recvData(si, &flags, clientRoutine))
@@ -461,11 +431,7 @@ void downloadFromClient(SocketInformation *si)
     int totalBytes = 0;
 
     // Reset buffers for next receive
-    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
-    memset(si->buffer, 0, sizeof(si->buffer));
-
-    si->dataBuf.len = BUF_SIZE;
-    si->dataBuf.buf = si->buffer;
+    resetBuffers(si);
 
     // Open file for appending
     fp = fopen(filepath, "a+b");
@@ -486,11 +452,7 @@ void downloadFromClient(SocketInformation *si)
         totalBytes += si->bytesReceived;
 
         // Reset buffers for next receive
-        ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
-        memset(si->buffer, 0, sizeof(si->buffer));
-
-        si->dataBuf.len = BUF_SIZE;
-        si->dataBuf.buf = si->buffer;
+        resetBuffers(si);
     }
 
     // Transmission done, close file
@@ -545,10 +507,7 @@ void uploadToClient(SocketInformation *si)
     loops = sz / BUF_SIZE + (sz % BUF_SIZE != 0);
     int lastSend = sz - ((loops - 1) * BUF_SIZE);
 
-    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
-    memset(si->buffer, 0, sizeof(si->buffer));
-    si->bytesReceived = 0;
-    si->bytesSent = 0;
+    resetBuffers(si);
 
     sprintf(si->buffer, "%d", sz);
 
@@ -558,10 +517,7 @@ void uploadToClient(SocketInformation *si)
 
     for (int i = 0; i < loops; i++)
     {
-        ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
-        memset(si->buffer, 0, sizeof(si->buffer));
-        si->bytesReceived = 0;
-        si->bytesSent = 0;
+        resetBuffers(si);
 
         // On the last iteration, send smaller packet
         if (i == loops - 1)

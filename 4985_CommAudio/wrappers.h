@@ -28,5 +28,6 @@ int setCltOptions(SOCKET sck, int option, char *optval);
 SOCKET createSocket(int type, int protocol);
 int sendData(SocketInformation *si, LPWSAOVERLAPPED_COMPLETION_ROUTINE routine);
 int recvData(SocketInformation *si, DWORD *flags, LPWSAOVERLAPPED_COMPLETION_ROUTINE routine);
+void resetBuffers(SocketInformation *si);
 
 #endif // WRAPPERS_H
