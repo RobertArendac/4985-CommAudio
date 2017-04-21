@@ -20,10 +20,10 @@
 --  PROGRAMMER:    Robert Arendac
 --
 --  NOTES:
---      Completion routine for sending.  Simply checks if something went wrong and then
---      clears the buffers.
+--      General completion routine that checks for errors or close connections, and updates
+--      amount of bytes sent/received.
 ---------------------------------------------------------------------------------------*/
-void CALLBACK sendRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD)
+void CALLBACK generalRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD)
 {
     SocketInformation *si = (SocketInformation *)overlapped;
 
@@ -39,47 +39,8 @@ void CALLBACK sendRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED o
         return;
     }
 
-    resetBuffers(si);
-}
+    si->bytesReceived = si->bytesSent = bytesTransferred;
 
-/*--------------------------------------------------------------------------------------
---  INTERFACE:     void CALLBACK pickRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD)
---                     DWORD error: Error that occured during WSARecv()
---                     DWORD bytesTransferred: Amount of bytes read
---                     LPWSAOVERLAPPED overlapped: Pointer to overlapped struct
---
---  RETURNS:       void
---
---  DATE:          April 3, 2017
---
---  DESIGNER:      Matt Goerwell
---
---  PROGRAMMER:    Matt Goerwell
---
---  MODIFIED:      April 11, Robert Arendac.  Also used as general purpose routine and updates
---                 the overlapped struct's bytes received.
---
---  NOTES:
---      Completion routine for requesting a specific song be played. Checks for error or if the
---      socket was closed.
----------------------------------------------------------------------------------------*/
-void CALLBACK pickRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD)
-{
-
-    SocketInformation *si = (SocketInformation *)overlapped;
-    // Check for error or close connection request
-    if (error != 0 || bytesTransferred == 0)
-    {
-        if (error)
-        {
-            fprintf(stderr, "Error: %d\n", error);
-        }
-        fprintf(stderr, "Closing socket: %d\n", (int)si->socket);
-        closesocket(si->socket);
-        return;
-    }
-
-    si->bytesReceived = bytesTransferred;
 }
 
 /*--------------------------------------------------------------------------------------
@@ -182,30 +143,5 @@ void CALLBACK parseRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED 
     else if (strcmp("update", si->buffer) == 0)
     {
        sendSongs(si);
-    }
-}
-
-/*--------------------------------------------------------------------------------------
---  INTERFACE:     void CALLBACK clientRoutine(DWORD error, DWORD, LPWSAOVERLAPPED, DWORD)
---                     DWORD error: error that occured during WSASend()
---                     Other args unused
---
---  RETURNS:       void
---
---  DATE:          March 29, 2017
---
---  DESIGNER:      Robert Arendac
---
---  PROGRAMMER:    Robert Arendac
---
---  NOTES:
---      Completion routine for sending song list.  In this case, we just want to check
---      for error.
----------------------------------------------------------------------------------------*/
-void CALLBACK clientRoutine(DWORD error, DWORD, LPWSAOVERLAPPED, DWORD)
-{
-    if (error)
-    {
-        fprintf(stderr, "Error: %d\n", error);
     }
 }

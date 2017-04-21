@@ -243,7 +243,7 @@ void requestSong(const char *song) {
     strcpy(si->buffer,"pick");
 
     // Send the request type;
-    if (!sendData(si, pickRoutine))
+    if (!sendData(si, generalRoutine))
         exit(1);
 
     //Reset buffers for next send.
@@ -253,7 +253,7 @@ void requestSong(const char *song) {
     strcpy(si->buffer, song);
 
     //send in song name
-    if (!sendData(si, pickRoutine))
+    if (!sendData(si, generalRoutine))
         exit(1);
 
     free(si);
@@ -287,7 +287,7 @@ void updateClientSongs() {
     strcpy(si->buffer,"update");
 
     // Send the request type;
-    if (!sendData(si, pickRoutine))
+    if (!sendData(si, generalRoutine))
         exit(1);
 
     resetBuffers(si);
@@ -344,7 +344,7 @@ void downloadSong(const char *song)
     strcpy(si->buffer, "dl");
 
     // Sends the request type
-    if (!sendData(si, sendRoutine))
+    if (!sendData(si, generalRoutine))
         exit(1);
 
     // Reset buffers in preparation to send again
@@ -352,14 +352,14 @@ void downloadSong(const char *song)
     strcpy(si->buffer, song);
 
     // Sends the song name
-    if (!sendData(si, sendRoutine))
+    if (!sendData(si, generalRoutine))
         exit(1);
 
     // Reset buffers in preparation to receive
     resetBuffers(si);
 
     // Receives song size
-    if (!recvData(si, &flags, pickRoutine))
+    if (!recvData(si, &flags, generalRoutine))
         exit(1);
 
     int size = atoi(si->dataBuf.buf);
@@ -372,7 +372,7 @@ void downloadSong(const char *song)
     while (totalBytes < size)
     {
         // Receives song file
-        if (!recvData(si, &flags, pickRoutine))
+        if (!recvData(si, &flags, generalRoutine))
             exit(1);
 
         //Write chunk to file
@@ -436,7 +436,7 @@ void uploadSong(QString song)
     strcpy(si->buffer, "ul");
 
     // Sends the request
-    if (!sendData(si, sendRoutine))
+    if (!sendData(si, generalRoutine))
         exit(1);
 
     // Reset buffers in preparation to send song name
@@ -444,7 +444,7 @@ void uploadSong(QString song)
     strcpy(si->buffer, fi.fileName().toStdString().c_str());
 
     // Sends the song name
-    if (!sendData(si, sendRoutine))
+    if (!sendData(si, generalRoutine))
         exit(1);
 
     // Reset buffers in preparation to upload song
@@ -466,7 +466,7 @@ void uploadSong(QString song)
     sprintf(si->buffer, "%d", sz);
 
     // Send file size
-    if (!sendData(si, clientRoutine))
+    if (!sendData(si, generalRoutine))
         exit(1);
 
     for (int i = 0; i < loops; i++)
@@ -488,7 +488,7 @@ void uploadSong(QString song)
         }
 
         // Send packet
-        if (!sendData(si, clientRoutine))
+        if (!sendData(si, generalRoutine))
             exit(1);
     }
 

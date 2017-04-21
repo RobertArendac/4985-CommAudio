@@ -173,8 +173,10 @@ void sendSongs(SocketInformation *si)
     resetBuffers(si);
     strcpy(si->buffer, music);
 
-    if (!sendData(si, clientRoutine))
+    if (!sendData(si, generalRoutine))
         exit(1);
+
+    resetBuffers(si);
 }
 
 /*--------------------------------------------------------------------------------------
@@ -199,7 +201,7 @@ void selectSong(SocketInformation *si)
     resetBuffers(si);
 
     // Receive the song
-    if (!recvData(si, &flags, clientRoutine))
+    if (!recvData(si, &flags, generalRoutine))
         exit(1);
 
     //temporary until I know how song selection works. replace this with playing the song, once ALEX has it ready.
@@ -334,7 +336,7 @@ void downloadFromClient(SocketInformation *si)
     resetBuffers(si);
 
     // Receives the song name
-    if (!recvData(si, &flags, clientRoutine))
+    if (!recvData(si, &flags, generalRoutine))
         exit(1);
 
     // Add the songname to the filepath
@@ -349,7 +351,7 @@ void downloadFromClient(SocketInformation *si)
     resetBuffers(si);
 
     // Receives the song size
-    if (!recvData(si, &flags, clientRoutine))
+    if (!recvData(si, &flags, generalRoutine))
         exit(1);
 
     int size = atoi(si->dataBuf.buf);
@@ -367,7 +369,7 @@ void downloadFromClient(SocketInformation *si)
     while (totalBytes < size)
     {
         // Receives song file
-        if (!recvData(si, &flags, pickRoutine))
+        if (!recvData(si, &flags, generalRoutine))
             exit(1);
 
         //Write chunk to file
@@ -414,7 +416,7 @@ void uploadToClient(SocketInformation *si)
     char musicPath[SONG_SIZE] = "../Music/";
 
     // Receive the name of the song to upload
-    if (!recvData(si, &flags, clientRoutine))
+    if (!recvData(si, &flags, generalRoutine))
         exit(1);
 
     // Add the file name to the filepath
@@ -437,7 +439,7 @@ void uploadToClient(SocketInformation *si)
     sprintf(si->buffer, "%d", sz);
 
     // Send file size
-    if (!sendData(si, clientRoutine))
+    if (!sendData(si, generalRoutine))
         exit(1);
 
     for (int i = 0; i < loops; i++)
@@ -459,7 +461,7 @@ void uploadToClient(SocketInformation *si)
         }
 
         // Send a single packet
-        if (!sendData(si, clientRoutine))
+        if (!sendData(si, generalRoutine))
             exit(1);
     }
 
