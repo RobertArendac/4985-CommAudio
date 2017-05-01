@@ -20,7 +20,7 @@ QBuffer audioBuffer;
 QByteArray audioByteData;
 QString prevTrack;
 QString currTrack;
-QVector<QByteArray> chunks(10);
+QVector<QByteArray> chunks(CHUNKSIZE);
 int stopFlag = 0;
 
 int startPos = 0;
@@ -187,7 +187,7 @@ void loadAudioStream()
     }
 
     // circularbuffer
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < CHUNKSIZE; i++)
     {
         // add audio chunks to vector
         tempData = audioByteData.mid(startPos, len);
@@ -219,7 +219,7 @@ void playStream()
     buf.open(QIODevice::ReadWrite); // open bffer as QIODevice
     int i = 0; // while loop counter
 
-    while(i < 10)
+    while(i < CHUNKSIZE)
     {
         if(stopFlag == 1) // if user clicked stopped. clear buffers
         {

@@ -11,6 +11,7 @@
 --      Contians network related functions that a client will need to perform
 ---------------------------------------------------------------------------------------*/
 
+#include "audio.h"
 #include "client.h"
 #include "server.h"
 #include <WS2tcpip.h>
@@ -179,9 +180,9 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port)
     buf.open(QIODevice::ReadWrite);
 
     // set audio playback formatting
-    format.setSampleSize(16);
-    format.setSampleRate(44100);
-    format.setChannelCount(2);
+    format.setSampleSize(SAMPLESIZE);
+    format.setSampleRate(SAMPLERATE);
+    format.setChannelCount(CHANNELCOUNT);
     format.setCodec("audio/pcm");
     format.setByteOrder(QAudioFormat::LittleEndian);
     format.setSampleType(QAudioFormat::UnSignedInt);
