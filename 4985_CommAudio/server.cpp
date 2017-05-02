@@ -1,11 +1,56 @@
+/*---------------------------------------------------------------------------------------
+--	SOURCE FILE:	server.cpp
+--
+--	DATE:			March 19, 2017
+--
+--	DESIGNERS:      Robert Arendac
+--
+--	PROGRAMMERS:    Robert Arendac, Alex Zielinski, Matt Goerwell
+--
+--	NOTES:
+--      Contians network related functions that a server will need to perform
+---------------------------------------------------------------------------------------*/
+
 #include "server.h"
 #include "client.h"
+#include "audio.h"
 #include <map>
 #include <QDebug>
 #include <WS2tcpip.h>
 
 std::map<SOCKET, std::string> clientMap;
 ServerWindow *servWin;
+SOCKADDR_IN multiDest;
+SOCKET audioSock;
+
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void sendAudio(const char *data)
+--                     const char *data: Audio data to send
+--
+--  RETURNS:       void
+--
+--  DATE:          April 11, 2017
+--
+--  DESIGNER:      Alex Zielinski
+--
+--  PROGRAMMER:    Alex Zielinski
+--
+--  NOTES:
+--      Function to send audio data passed in via parameter through a UDP socket
+---------------------------------------------------------------------------------------*/
+void sendAudio(const char *data)
+{
+    // send data and error check
+    if (sendto(audioSock, data, OFFSET, 0, (struct sockaddr*)&multiDest, sizeof(multiDest)) < 0)
+    {
+        qDebug() << "sendto failed: " << WSAGetLastError();
+    }
+    else
+    {
+        qDebug() << "Sent Audio Data";
+    }
+}
 
 /*--------------------------------------------------------------------------------------
 --  INTERFACE:     SOCKADDR_IN serverCreateAddress(int port)
@@ -42,7 +87,7 @@ SOCKADDR_IN serverCreateAddress(int port)
 --
 --  DATE:          March 19, 2017
 --
---  MODIFIED:      March 29, 2017 - Made function return an int ~ AZ
+--  MODIFIED:      March 29, 2017 - Made function return int ~ AZ
 --
 --  DESIGNER:      Robert Arendac
 --
@@ -307,8 +352,9 @@ void selectSong(SocketInformation *si)
     if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
         fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
 
-    //temporary until I know how song selection works. replace this with playing the song, once ALEX has it ready.
-    fprintf(stdout,"Song name: %s\n",si->buffer);
+    QString fileName = si->buffer;
+    QString audioFilePath = "../Music/" + fileName;
+    play(audioFilePath);
 }
 
 
@@ -323,10 +369,11 @@ void selectSong(SocketInformation *si)
 --
 --  MODIFIED:      March 28, 2017 - Added multicasting capabilities
 --                 March 29, 2017 - Made function return an int ~ AZ
+--                 April 11, 2017 - Re-structered UDP socket to fix bug ~ RA, AZ
 --
 --  DESIGNER:      Robert Arendac
 --
---  PROGRAMMER:    RobertArendac, Alex Zielinski
+--  PROGRAMMER:    Robert Arendac, Alex Zielinski
 --
 --  NOTES:
 --      Starts up a UDP server.  Will be responsible for streaming audio.  Also sets up
@@ -334,85 +381,64 @@ void selectSong(SocketInformation *si)
 ---------------------------------------------------------------------------------------*/
 void runUDPServer(ServerWindow *sw, int port)
 {
-    SOCKADDR_IN addr, cltDest;  //Addresses to receive from and send to
-    SOCKET acceptSocket;        //Connect to send/receive on
-    struct ip_mreq stMreq;      //Struct for multicasting
-    u_long ttl = MCAST_TTL;     //Time to live
-    int flag = 0;               //False flag
-    SocketInformation *si;
-    DWORD result, flags = 0;
-    WSAEVENT events[1];
+    SOCKADDR_IN addr, destAddr;
+    SOCKET udpSck;
+    int flag = 0;
+    struct ip_mreq stMreq;
+    u_long ttl = MCAST_TTL;
 
-    // Init address info
-    addr = serverCreateAddress(port);
-
-    // Create a socket for incomming data
-    if ((acceptSocket = createSocket(SOCK_DGRAM, IPPROTO_UDP)) == NULL)
+    // create socket and error check
+    if ((udpSck = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET)
     {
-        sw->updateServerStatus("Status: Socket Error");
+        qDebug() << "failed to create socket " << WSAGetLastError();
         return;
     }
 
-    // bind the socket
-    if (!bindSocket(acceptSocket, &addr))
+    // set socket addr struct
+    addr.sin_family      = AF_INET; // ip_v4
+    addr.sin_addr.s_addr = htonl(INADDR_ANY); /* any interface */
+    addr.sin_port        = 0;                 /* any port */
+
+    // bind socket and error check
+    if (bind(udpSck, (struct sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR)
     {
-        sw->updateServerStatus("Status: Socket Error");
+        qDebug() << "Bind failed: " << WSAGetLastError();
         return;
     }
 
-    // Multicast interface
+    // set multicast interface
     stMreq.imr_multiaddr.s_addr = inet_addr(MCAST_ADDR);
     stMreq.imr_interface.s_addr = INADDR_ANY;
 
-    // Join multicast group, specify time-to-live, and disable loop
-    if (!setServOptions(acceptSocket, IP_ADD_MEMBERSHIP, (char *)&stMreq))
+    /* set socket multicast options and error check */
+    if (setsockopt(udpSck, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&stMreq, sizeof(stMreq)) == SOCKET_ERROR)
     {
-        sw->updateServerStatus("Status: Socket Error");
+        qDebug() << "setsockopt failed: " << WSAGetLastError();
         return;
     }
 
-    if (!setServOptions(acceptSocket, IP_MULTICAST_TTL, (char *)&ttl))
+    if (setsockopt(udpSck, IPPROTO_IP, IP_MULTICAST_TTL, (char *)&ttl, sizeof(ttl)) == SOCKET_ERROR)
     {
-        sw->updateServerStatus("Status: Socket Error");
+        qDebug() << "setsockopt failed: " << WSAGetLastError();
         return;
     }
 
-    if (!setServOptions(acceptSocket, IP_MULTICAST_LOOP, (char *)&flag))
+    if (setsockopt(udpSck, IPPROTO_IP, IP_MULTICAST_LOOP, (char *)&flag, sizeof(flag)) == SOCKET_ERROR)
     {
-        sw->updateServerStatus("Status: Socket Error");
+        qDebug() << "setsockopt failed: " << WSAGetLastError();
         return;
     }
 
-    cltDest = clientCreateAddress(MCAST_ADDR, MCAST_PORT);
+    // set destination addr struct
+    destAddr.sin_family      = AF_INET;
+    destAddr.sin_addr.s_addr = inet_addr(MCAST_ADDR); /* any interface */
+    destAddr.sin_port        = htons(MCAST_PORT);                 /* any port */
 
-    //Allocate socket information
-    si = (SocketInformation *)malloc(sizeof(SocketInformation));
-
-    //Fill in the socket info
-    si->socket = acceptSocket;
-    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
-    memset(si->buffer, 0, sizeof(si->buffer));
-    si->bytesReceived = 0;
-    si->bytesSent = 0;
-    si->dataBuf.len = BUF_SIZE;
-    si->dataBuf.buf = si->buffer;
-
-    while (1)
-    {
-        //Testing UDP works, use as template for actually doing something useful
-        /*
-        WSARecvFrom(si->socket, &(si->dataBuf), 1, NULL, &flags, NULL, NULL, &(si->overlapped), newRoutine);
-
-        //Wait for receive to complete
-        events[0] = WSACreateEvent();
-        if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
-            fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
-
-        qDebug() << si->dataBuf.buf << endl;
-        */
-
-    }
+    audioSock = udpSck;
+    multiDest = destAddr;
+    qDebug() << "Ready to send data";
 }
+
 
 /*--------------------------------------------------------------------------------------
 --  INTERFACE:     void downloadFromClient(SocketInformation *si)

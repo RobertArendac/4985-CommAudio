@@ -1,8 +1,6 @@
 /*---------------------------------------------------------------------------------------
 --	SOURCE FILE:	wrappers.cpp
 --
---	FUNCTIONS:      int startWinsock()
---
 --	DATE:			March 3, 2017
 --
 --	DESIGNERS:		Robert Arendac
@@ -60,7 +58,7 @@ int startWinsock() {
 ---------------------------------------------------------------------------------------*/
 int bindSocket(SOCKET s, SOCKADDR_IN *addr) {
     if (bind(s, (PSOCKADDR)addr, sizeof(SOCKADDR_IN)) == SOCKET_ERROR) {
-        fprintf(stderr, "bind failed with error %d\n", WSAGetLastError());
+        qDebug() << "Socket Error: " << WSAGetLastError();
         return 0;
     }
 

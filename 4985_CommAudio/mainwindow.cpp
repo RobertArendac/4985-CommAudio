@@ -1,8 +1,6 @@
 /*---------------------------------------------------------------------------------------
 --	SOURCE FILE:	mainwindow.cpp
 --
---	FUNCTIONS:
---
 --	DATE:			March 3, 2017
 --
 --	DESIGNERS: Alex Zielinski
@@ -49,7 +47,6 @@ MainWindow::MainWindow(QWidget *parent) :
 /*--------------------------------------------------------------------------------------
 --  INTERFACE:     MainWindow::MainWindow(QWidget *parent)
 --
---
 --  RETURNS:
 --
 --  DATE:          March 19, 2017
@@ -70,8 +67,7 @@ MainWindow::~MainWindow()
 /*--------------------------------------------------------------------------------------
 --  INTERFACE:     void MainWindow::on_serverButton_clicked()
 --
---
---  RETURNS:
+--  RETURNS:       void
 --
 --  DATE:          March 19, 2017
 --
@@ -94,8 +90,7 @@ void MainWindow::on_serverButton_clicked()
 /*--------------------------------------------------------------------------------------
 --  INTERFACE:     void MainWindow::on_clientButton_clicked()
 --
---
---  RETURNS:
+--  RETURNS:       void
 --
 --  DATE:          March 19, 2017
 --

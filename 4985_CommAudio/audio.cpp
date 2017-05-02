@@ -1,13 +1,6 @@
 /*---------------------------------------------------------------------------------------
 --	SOURCE FILE:	clientwindow.cpp
 --
---	FUNCTIONS:      void initAudioOutput();
---                  void play(QString filePath);
---                  void loadAudioData(QString filePath);
---                  void loadAudioStream();
---                  void playStream();
---
---
 --	DATE:			April 8, 2017
 --
 --	DESIGNERS:      Alex Zielinski
@@ -19,13 +12,19 @@
 ---------------------------------------------------------------------------------------*/
 
 #include "audio.h"
+#include "server.h"
+#include <thread>
 
 QAudioOutput *output;
-QBuffer *audioBuffer;
+QBuffer audioBuffer;
 QByteArray audioByteData;
 QString prevTrack;
 QString currTrack;
-QList<QByteArray> audioByteChunks;
+QVector<QByteArray> chunks(CHUNKSIZE);
+int stopFlag = 0;
+
+int startPos = 0;
+int len = OFFSET;
 
 /*--------------------------------------------------------------------------------------
 --  INTERFACE:     bool audioPlaying()
@@ -121,9 +120,13 @@ void initAudioOutput()
 void play(QString filePath)
 {
     currTrack = filePath; // set current track to what user selected
-    loadAudioData(currTrack); // load raw data from wav file to a buffer
-    //loadAudioStream(); ** implement later **
-    playStream();
+
+    if (prevTrack != currTrack || output->state() == QAudio::IdleState && prevTrack == filePath)
+    {
+        loadAudioData(currTrack); // load raw data from wav file to a buffer
+        loadAudioStream();
+        playStream();
+    }
 }
 
 /*--------------------------------------------------------------------------------------
@@ -145,19 +148,17 @@ void loadAudioData(QString filePath)
 {
     // create file handle for audio file
     QFile audioFile(filePath);
-
     // open audio file
     if (audioFile.open(QIODevice::ReadOnly))
-    {   // check if user selected a different track
-        if (prevTrack != currTrack || output->state() == QAudio::IdleState && prevTrack == filePath)
-        {
-            prevTrack = currTrack;
-            // seek to raw audio data of wav file
-            audioFile.seek(AUDIODATA);
+    {
+        prevTrack = currTrack;
+        // seek to raw audio data of wav file
+        audioFile.seek(AUDIODATA);
 
-            // extract raw audio data
-            audioByteData = audioFile.readAll();
-        }
+        // extract raw audio data
+        audioByteData = audioFile.readAll();
+        qDebug() << "size: " << audioByteData.size();
+        audioFile.close();
     }
 }
 
@@ -173,11 +174,28 @@ void loadAudioData(QString filePath)
 --  PROGRAMMER:    Alex Zielinski
 --
 --  NOTES:
---      Plays audio from stream of data
+--      Loads chunks of data into circular buffer (vector)
 ---------------------------------------------------------------------------------------*/
 void loadAudioStream()
 {
-    // ** implement later **
+    QByteArray tempData;
+
+    if(!chunks.isEmpty()) // check if vector has data
+    {
+        chunks.clear(); // clear the vector of audio chunks
+        qDebug() << "cleared";
+    }
+
+    // circularbuffer
+    for (int i = 0; i < CHUNKSIZE; i++)
+    {
+        // add audio chunks to vector
+        tempData = audioByteData.mid(startPos, len);
+        chunks.push_back(tempData);
+        tempData.clear();
+
+        startPos += len;
+    }
 }
 
 /*--------------------------------------------------------------------------------------
@@ -196,21 +214,52 @@ void loadAudioStream()
 ---------------------------------------------------------------------------------------*/
 void playStream()
 {
-    // initialize audio buffer
-    audioBuffer = new QBuffer(&audioByteData);
-    audioBuffer->open(QIODevice::ReadWrite);
-    audioBuffer->seek(0);
-    //qDebug() << audioBuffer->size();
+    QByteArray tmp; // tmp array to hold data chunk
+    QBuffer buf(&tmp); // create QBuffer based off of tmp
+    buf.open(QIODevice::ReadWrite); // open bffer as QIODevice
+    int i = 0; // while loop counter
 
-    output->start(audioBuffer); // play track
-
-    // event loop for tracck
-    QEventLoop loop;
-    QObject::connect(output, SIGNAL(stateChanged(QAudio::State)), &loop, SLOT(quit()));
-    do
+    while(i < CHUNKSIZE)
     {
-        loop.exec();
-    } while(output->state() == QAudio::ActiveState);
+        if(stopFlag == 1) // if user clicked stopped. clear buffers
+        {
+            output->stop();
+            audioByteData.clear();
+            tmp.clear();
+            buf.close();
+            stopFlag = 0;
+            return;
+        }
+
+        // appends chunk of data to play
+        tmp.append(chunks[i].data(),chunks[i].size());
+
+        output->start(&buf); // play track
+        // event loop for track
+        QEventLoop loop;
+        QObject::connect(output, SIGNAL(stateChanged(QAudio::State)), &loop, SLOT(quit()));
+        do
+        {
+            loop.exec();
+            if(buf.atEnd())
+            {
+                qDebug() << "End";
+                sendAudio(chunks[i].data());
+                qDebug() << "size: " << chunks[i].size();
+            }
+        } while(output->state() == QAudio::ActiveState);
+
+        if(i == 9)
+        {
+            qDebug() << "circular buffer";
+            i = 0;
+            loadAudioStream();
+        }
+        else
+        {
+            i++;
+        }
+    }
 }
 
 /*--------------------------------------------------------------------------------------
@@ -225,15 +274,9 @@ void playStream()
 --  PROGRAMMER:    Alex Zielinski
 --
 --  NOTES:
---      Stops audio from playing
+--      Stops audio from playing. Set flag to false
 ---------------------------------------------------------------------------------------*/
 void stopAudio()
 {
-    // check if audio is playing
-    if (output->state() == QAudio::ActiveState)
-    {
-        output->stop(); // stop the audio
-        output->reset();
-        audioBuffer->close();
-    }
+    stopFlag = 1;
 }
