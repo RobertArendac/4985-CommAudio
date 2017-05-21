@@ -33,7 +33,8 @@
 ---------------------------------------------------------------------------------------*/
 int startWinsock() {
     WSADATA wsaData;
-    if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0) {
+    if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0)
+    {
         perror("WSAStartup failed");
         WSACleanup();
         return 0;
@@ -161,7 +162,10 @@ int acceptingSocket(SOCKET *acceptSocket, SOCKET listenSocket, SOCKADDR *addr)
 {
     int size = sizeof(*addr);
     if ((*acceptSocket = accept(listenSocket, addr, &size)) == NULL)
+    {
+        fprintf(stderr, "accept() failed: %d", WSAGetLastError());
         return 0;
+    }
 
     return 1;
 }
@@ -218,6 +222,23 @@ SOCKET createSocket(int type, int protocol)
     return s;
 }
 
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     int recvData(SocketInformation *si, DWORD *flags, LPWSAOVERLAPPED_COMPLETION_ROUTINE routine)
+--                     SocketInformation *si: struct to hold socket info
+--                     DWORD *flags: Receive flags
+--                     LPWSAOVERLAPPED_COMPLETION_ROUTINE routine: Completion routine for reading
+--
+--  RETURNS:       0 on failure, 1 on success
+--
+--  DATE:          April 21, 2017
+--
+--  DESIGNER:      Robert Arendac
+--
+--  PROGRAMMER:    RobertArendac
+--
+--  NOTES:
+--      Performs an overlapped read.
+---------------------------------------------------------------------------------------*/
 int recvData(SocketInformation *si, DWORD *flags, LPWSAOVERLAPPED_COMPLETION_ROUTINE routine)
 {
     WSAEVENT event[1];
@@ -239,6 +260,22 @@ int recvData(SocketInformation *si, DWORD *flags, LPWSAOVERLAPPED_COMPLETION_ROU
     return 1;
 }
 
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     int sendData(SocketInformation *si, LPWSAOVERLAPPED_COMPLETION_ROUTINE routine)
+--                     SocketInformation *si: struct to hold socket info
+--                     LPWSAOVERLAPPED_COMPLETION_ROUTINE routine: Completion routine for sending
+--
+--  RETURNS:       0 on failure, 1 on success
+--
+--  DATE:          April 21, 2017
+--
+--  DESIGNER:      Robert Arendac
+--
+--  PROGRAMMER:    RobertArendac
+--
+--  NOTES:
+--      Performs an overlapped send.
+---------------------------------------------------------------------------------------*/
 int sendData(SocketInformation *si, LPWSAOVERLAPPED_COMPLETION_ROUTINE routine)
 {
     WSAEVENT event[1];
@@ -260,6 +297,21 @@ int sendData(SocketInformation *si, LPWSAOVERLAPPED_COMPLETION_ROUTINE routine)
     return 1;
 }
 
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void resetBuffers(SocketInformation *si)
+--                     SocketInformation *si: struct that holds socket info
+--
+--  RETURNS:       void
+--
+--  DATE:          April 21, 2017
+--
+--  DESIGNER:      Robert Arendac
+--
+--  PROGRAMMER:    RobertArendac
+--
+--  NOTES:
+--      Resets everything in the SocketInformation struct
+---------------------------------------------------------------------------------------*/
 void resetBuffers(SocketInformation *si)
 {
     ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));

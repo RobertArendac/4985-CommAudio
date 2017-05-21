@@ -26,6 +26,7 @@ ServerWindow *servWin;
 SOCKADDR_IN serverCreateAddress(int port)
 {
     SOCKADDR_IN addr;
+    memset((char *)&addr, 0, sizeof(SOCKADDR_IN));
 
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -89,6 +90,7 @@ void runTCPServer(ServerWindow *sw, int port)
     {
         if (!acceptingSocket(&acceptSocket, listenSocket, (SOCKADDR *)&clientAddr))
         {
+            sw->updateServerStatus("Status: Could not accept connection");
             return;
         }
 
@@ -119,7 +121,7 @@ void runTCPServer(ServerWindow *sw, int port)
 DWORD WINAPI tcpClient(void *arg)
 {
     SOCKET *clientSck = (SOCKET *)arg;      //Client socket
-    DWORD flags = 0;                        //Bytes to be sent
+    DWORD flags = 0;                        //Receive flags
     SocketInformation *si;                  //Struct holding socket info
 
     // Fill out the socket info

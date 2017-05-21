@@ -7,8 +7,8 @@
 #include <QFile>
 #include <QFileInfo>
 #include "socketinformation.h"
-ClientWindow *clientWind;
 
+ClientWindow *clientWind;
 SOCKET cltSck;      //Connected TCP socket
 
 /*--------------------------------------------------------------------------------------
@@ -30,6 +30,7 @@ SOCKET cltSck;      //Connected TCP socket
 SOCKADDR_IN clientCreateAddress(const char *host, int port)
 {
     SOCKADDR_IN addr;
+    memset((char *)&addr, 0, sizeof(SOCKADDR_IN));
 
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = inet_addr(host);
@@ -83,7 +84,6 @@ void runTCPClient(ClientWindow *cw, const char *ip, int port)
 
 
     // Initialize address info
-    memset((char *)&addr, 0, sizeof(SOCKADDR_IN));
     addr = clientCreateAddress(ip, port);
 
     // Connect to the server
@@ -158,7 +158,6 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port)
     }
 
     // Init address info
-    memset((char *)&addr, 0, sizeof(SOCKADDR_IN));
     addr = clientCreateAddress(ip, port);
 
     // Set the reuse addr
@@ -168,7 +167,6 @@ void runUDPClient(ClientWindow *cw, const char *ip, int port)
         return;
     }
 
-    memset((char *)&srvAddr, 0, sizeof(SOCKADDR_IN));
     srvAddr = serverCreateAddress(MCAST_PORT);
 
     // Bind to multicast group
