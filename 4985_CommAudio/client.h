@@ -16,9 +16,4 @@ void requestSong(const char *song);
 void updateClientSongs();
 void uploadSong(QString song);
 
-//callback routines
-void CALLBACK pickRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
-void CALLBACK sendRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
-void CALLBACK songRoutine(DWORD error, DWORD bytesTransferred, LPWSAOVERLAPPED overlapped, DWORD flags);
-
 #endif // CLIENT_H

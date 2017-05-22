@@ -31,7 +31,8 @@
 ---------------------------------------------------------------------------------------*/
 int startWinsock() {
     WSADATA wsaData;
-    if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0) {
+    if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0)
+    {
         perror("WSAStartup failed");
         WSACleanup();
         return 0;
@@ -159,7 +160,10 @@ int acceptingSocket(SOCKET *acceptSocket, SOCKET listenSocket, SOCKADDR *addr)
 {
     int size = sizeof(*addr);
     if ((*acceptSocket = accept(listenSocket, addr, &size)) == NULL)
+    {
+        fprintf(stderr, "accept() failed: %d", WSAGetLastError());
         return 0;
+    }
 
     return 1;
 }
@@ -204,7 +208,8 @@ int setCltOptions(SOCKET sck, int option, char *optval)
 --  NOTES:
 --      Creates a new socket for either UDP or TCP connections
 ---------------------------------------------------------------------------------------*/
-SOCKET createSocket(int type, int protocol) {
+SOCKET createSocket(int type, int protocol)
+{
     SOCKET s;
 
     if ((s = WSASocket(AF_INET, type, protocol, NULL, 0, WSA_FLAG_OVERLAPPED)) == INVALID_SOCKET) {
@@ -213,4 +218,104 @@ SOCKET createSocket(int type, int protocol) {
     }
 
     return s;
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     int recvData(SocketInformation *si, DWORD *flags, LPWSAOVERLAPPED_COMPLETION_ROUTINE routine)
+--                     SocketInformation *si: struct to hold socket info
+--                     DWORD *flags: Receive flags
+--                     LPWSAOVERLAPPED_COMPLETION_ROUTINE routine: Completion routine for reading
+--
+--  RETURNS:       0 on failure, 1 on success
+--
+--  DATE:          April 21, 2017
+--
+--  DESIGNER:      Robert Arendac
+--
+--  PROGRAMMER:    RobertArendac
+--
+--  NOTES:
+--      Performs an overlapped read.
+---------------------------------------------------------------------------------------*/
+int recvData(SocketInformation *si, DWORD *flags, LPWSAOVERLAPPED_COMPLETION_ROUTINE routine)
+{
+    WSAEVENT event[1];
+
+    if (WSARecv(si->socket, &(si->dataBuf), 1, NULL, flags, &(si->overlapped), routine) == SOCKET_ERROR)
+    {
+        qDebug() << "WSARecv failed: error " << WSAGetLastError();
+        return 0;
+    }
+
+    event[0] = WSACreateEvent();
+
+    if (WSAWaitForMultipleEvents(1, event, FALSE, WSA_INFINITE, TRUE) != WAIT_IO_COMPLETION)
+    {
+        qDebug() << "WaitForMultipleEvents() failed: " << WSAGetLastError();
+        return 0;
+    }
+
+    return 1;
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     int sendData(SocketInformation *si, LPWSAOVERLAPPED_COMPLETION_ROUTINE routine)
+--                     SocketInformation *si: struct to hold socket info
+--                     LPWSAOVERLAPPED_COMPLETION_ROUTINE routine: Completion routine for sending
+--
+--  RETURNS:       0 on failure, 1 on success
+--
+--  DATE:          April 21, 2017
+--
+--  DESIGNER:      Robert Arendac
+--
+--  PROGRAMMER:    RobertArendac
+--
+--  NOTES:
+--      Performs an overlapped send.
+---------------------------------------------------------------------------------------*/
+int sendData(SocketInformation *si, LPWSAOVERLAPPED_COMPLETION_ROUTINE routine)
+{
+    WSAEVENT event[1];
+
+    if (WSASend(si->socket, &(si->dataBuf), 1, NULL, 0, &(si->overlapped), routine) == SOCKET_ERROR)
+    {
+        qDebug() << "WSASend failed: error " << WSAGetLastError();
+        return 0;
+    }
+
+    event[0] = WSACreateEvent();
+
+    if (WSAWaitForMultipleEvents(1, event, FALSE, WSA_INFINITE, TRUE) != WAIT_IO_COMPLETION)
+    {
+        qDebug() << "WaitForMultipleEvents() failed: " << WSAGetLastError();
+        return 0;
+    }
+
+    return 1;
+}
+
+/*--------------------------------------------------------------------------------------
+--  INTERFACE:     void resetBuffers(SocketInformation *si)
+--                     SocketInformation *si: struct that holds socket info
+--
+--  RETURNS:       void
+--
+--  DATE:          April 21, 2017
+--
+--  DESIGNER:      Robert Arendac
+--
+--  PROGRAMMER:    RobertArendac
+--
+--  NOTES:
+--      Resets everything in the SocketInformation struct
+---------------------------------------------------------------------------------------*/
+void resetBuffers(SocketInformation *si)
+{
+    ZeroMemory(&(si->overlapped), sizeof(WSAOVERLAPPED));
+    memset(si->buffer, 0, sizeof(si->buffer));
+    si->bytesReceived = 0;
+    si->bytesSent = 0;
+    si->dataBuf.len = BUF_SIZE;
+    si->dataBuf.buf = si->buffer;
 }

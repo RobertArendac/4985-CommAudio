@@ -31,7 +31,8 @@ SOURCES += main.cpp\
     client.cpp \
     clientwindow.cpp \
     serverwindow.cpp \
-    audio.cpp
+    audio.cpp \
+    callbacks.cpp
 
 HEADERS  += mainwindow.h \
     wrappers.h \
@@ -41,7 +42,8 @@ HEADERS  += mainwindow.h \
     serverwindow.h \
     audio.h \
     socketinformation.h \
-    threadinfo.h
+    threadinfo.h \
+    callbacks.h
 
 
 FORMS    += mainwindow.ui \
