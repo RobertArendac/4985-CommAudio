@@ -8,14 +8,13 @@
 #include "serverwindow.h"
 #include "clientwindow.h"
 #include "socketinformation.h"
+#include "audio.h"
 
 #define MCAST_ADDR  "234.5.6.7"
 #define MCAST_PORT  8910
-#define MCAST_TTL   32  //Kind of an arbitrary setting, I don't know what's best here...
+#define MCAST_TTL   1  //Kind of an arbitrary setting, I don't know what's best here...
 
 #define SONG_SIZE 1024
-
-
 
 int startWinsock();
 int bindSocket(SOCKET s, SOCKADDR_IN *addr);

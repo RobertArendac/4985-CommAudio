@@ -1,3 +1,17 @@
+/*---------------------------------------------------------------------------------------
+--	SOURCE FILE:	client.cpp
+--
+--	DATE:			March 19, 2017
+--
+--	DESIGNERS:      Robert Arendac
+--
+--	PROGRAMMERS:    Robert Arendac, Alex Zielinski, Matt Goerwell
+--
+--	NOTES:
+--      Contians network related functions that a client will need to perform
+---------------------------------------------------------------------------------------*/
+
+#include "audio.h"
 #include "client.h"
 #include "server.h"
 #include "callbacks.h"
@@ -6,9 +20,17 @@
 #include <QFileDialog>
 #include <QFile>
 #include <QFileInfo>
+#include <QBuffer>
+#include <QIODevice>
+#include <QAudioOutput>
+#include <QAudioFormat>
+#include <QAudioInput>
+#include <QAudioDeviceInfo>
+#include <QEventLoop>
 #include "socketinformation.h"
 
 ClientWindow *clientWind;
+QAudioOutput *cltOutput;
 SOCKET cltSck;      //Connected TCP socket
 
 /*--------------------------------------------------------------------------------------
@@ -108,6 +130,7 @@ void runTCPClient(ClientWindow *cw, const char *ip, int port)
     if (!recvData(si, &flags, songRoutine))
         exit(1);
 
+
     free(si);
     cw->updateClientStatus("Status: Connected");
     cw->enableButtons();
@@ -135,84 +158,95 @@ void runTCPClient(ClientWindow *cw, const char *ip, int port)
 ---------------------------------------------------------------------------------------*/
 void runUDPClient(ClientWindow *cw, const char *ip, int port)
 {
-    SOCKET sck;                 //Socket to send/receive on
-    SOCKADDR_IN addr, srvAddr;  //Addresses for sending/receiving
-    struct ip_mreq stMreq;      //Struct for multicasting
-    int flag = 1;               //True flag
-    SocketInformation *si;
-    DWORD result;
-    WSAEVENT events[1];         //Event array
+    SOCKADDR_IN addr;
+    SOCKET udpSck;
+    struct ip_mreq stMreq;
+    int flag = 1;
+    char recvBuff[OFFSET];
 
-    // Create a UDP socket
-    if ((sck = createSocket(SOCK_DGRAM, IPPROTO_UDP)) == NULL)
+    QAudioFormat format;
+    QByteArray chunkData;
+    QBuffer buf(&chunkData);
+    buf.open(QIODevice::ReadWrite);
+
+    // set audio playback formatting
+    format.setSampleSize(SAMPLESIZE);
+    format.setSampleRate(SAMPLERATE);
+    format.setChannelCount(CHANNELCOUNT);
+    format.setCodec("audio/pcm");
+    format.setByteOrder(QAudioFormat::LittleEndian);
+    format.setSampleType(QAudioFormat::UnSignedInt);
+
+    // setup default output device
+    QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
+    if (!info.isFormatSupported(format))
     {
-        cw->updateClientStatus("Status: Socket Error");
+        qDebug() << "raw audio format not supported by backend, cannot play audio.";
         return;
     }
 
-    // Check for valid host
-    if (!connectHost(ip))
+    // initialize output
+    cltOutput = new QAudioOutput(format);
+
+    if ((udpSck = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET)
     {
-        cw->updateClientStatus("Status: Host IP Error");
+        qDebug() << "failed to create socket " << WSAGetLastError();
         return;
     }
 
-    // Init address info
-    addr = clientCreateAddress(ip, port);
-
-    // Set the reuse addr
-    if (!setCltOptions(sck, SO_REUSEADDR, (char *)&flag))
+    if (setsockopt(udpSck, SOL_SOCKET, SO_REUSEADDR, (char *)&flag, sizeof(flag)) == SOCKET_ERROR)
     {
-        cw->updateClientStatus("Status: Socket Error");
+        qDebug() << "setsockopt failed SO_REUSEADDR: " << WSAGetLastError();
         return;
     }
 
-    srvAddr = serverCreateAddress(MCAST_PORT);
+    addr.sin_family      = AF_INET;
+    addr.sin_addr.s_addr = htonl(INADDR_ANY); /* any interface */
+    addr.sin_port        = htons(MCAST_PORT);                 /* any port */
 
-    // Bind to multicast group
-    if (!bindSocket(sck, &srvAddr))
+    if (bind(udpSck, (struct sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR)
     {
-        cw->updateClientStatus("Status: Socket Error");
+        qDebug() << "Bind failed: " << WSAGetLastError();
         return;
     }
 
-    // Setup multicast interface
     stMreq.imr_multiaddr.s_addr = inet_addr(MCAST_ADDR);
     stMreq.imr_interface.s_addr = INADDR_ANY;
 
-    // Join multicast group
-    if (!setServOptions(sck, IP_ADD_MEMBERSHIP, (char *)&stMreq))
+    if (setsockopt(udpSck, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&stMreq, sizeof(stMreq)) == SOCKET_ERROR)
     {
-        cw->updateClientStatus("Status: Socket Error");
+        qDebug() << "setsockopt failed IP_ADD_MEMBERSHIP: " << WSAGetLastError();
         return;
     }
 
-    //Allocate socket information
-    si = (SocketInformation *)malloc(sizeof(SocketInformation));
+    int addrSize = sizeof(struct sockaddr_in);
 
-    //Fill in the socket info
-    si->socket = sck;
-    resetBuffers(si);
+    qDebug() << "Ready to read data";
 
-    //Testing UDP works, use as template for actually doing something useful
-    /*
-    WSASendTo(si->socket, &(si->dataBuf), 1, NULL, 0, (SOCKADDR *)&addr, sizeof(SOCKADDR_IN), &(si->overlapped), clientRoutine);
+    while (1)
+    {
+        if (recvfrom(udpSck, recvBuff, OFFSET, 0, (struct sockaddr*)&addr, &addrSize) < 0)
+        {
+            qDebug() << "Reading error";
+        }
+        else
+        {
+            qDebug() << "Data read with size: " << sizeof(recvBuff);
+            chunkData.append(recvBuff, OFFSET);
 
-    //Wait for receive to complete
-    events[0] = WSACreateEvent();
-    if ((result = WSAWaitForMultipleEvents(1, events, FALSE, WSA_INFINITE, TRUE)) != WAIT_IO_COMPLETION)
-        fprintf(stdout, "WaitForMultipleEvents() failed: %d", result);
+            cltOutput->start(&buf); // play track
+            // event loop for track
+            QEventLoop loop;
+            QObject::connect(cltOutput, SIGNAL(stateChanged(QAudio::State)), &loop, SLOT(quit()));
+            do
+            {
+                loop.exec();
+            } while(cltOutput->state() == QAudio::ActiveState);
 
-    */
-
-    /* This is here because we do not have a graceful shutdown.  We will need to design all sockets
-     * being closed and all TCP and UDP functions ending before performing any sort of cleanup.
-     */
-    while (1);
-
-    printf("closing socket\n");
-    closesocket(sck);
-    WSACleanup();
+            //qDebug() << recvBuff;
+            memset(recvBuff, 0, OFFSET);
+        }
+    }
 }
 
 /*--------------------------------------------------------------------------------------

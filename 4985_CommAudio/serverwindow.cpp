@@ -1,8 +1,6 @@
 /*---------------------------------------------------------------------------------------
 --	SOURCE FILE:	serverwindow.cpp
 --
---	FUNCTIONS:
---
 --	DATE:			March 19, 2017
 --
 --	DESIGNERS:      Alex Zielinski
@@ -133,7 +131,6 @@ void ServerWindow::on_srvTrackStopButton_clicked()
     stopAudio();
     resetPrevTrack();
 }
-
 
 /*--------------------------------------------------------------------------------------
 --  INTERFACE:     void ServerWindow::playNextTrack()

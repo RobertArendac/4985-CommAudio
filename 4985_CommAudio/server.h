@@ -15,8 +15,8 @@
 #include "wrappers.h"
 
 //Audio Methods
-void pauseAudio();
 void playAudio(QString filePath);
+void sendAudio(const char *data);
 
 //Socket Handling
 void removeSocket(SOCKET socket);
